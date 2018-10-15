@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.4">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2018-10-15T22:52:49+03:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Blogging with Matan</title><subtitle>Blogging with Matan about NLP and Deep Learning</subtitle><entry><title type="html">Implementation Flow Of Neural Networks</title><link href="http://localhost:4000/2018/06/24/implementation-flow-of-neural-networks.html" rel="alternate" type="text/html" title="Implementation Flow Of Neural Networks" /><published>2018-06-24T00:00:00+03:00</published><updated>2018-06-24T00:00:00+03:00</updated><id>http://localhost:4000/2018/06/24/implementation-flow-of-neural-networks</id><content type="html" xml:base="http://localhost:4000/2018/06/24/implementation-flow-of-neural-networks.html">&lt;p&gt;Looking back at the time I was a software engineer, when the program didn’t behave as I expected, usually the bug presented itself in all its glory. When I started writing deep neural networks this became less intuitive, a lot less.&lt;/p&gt;
+
+&lt;p&gt;While the research of neural networks is blooming, we still lack of thorough understanding of all its nuts and bolts. It doesn’t only hurt us from a theoretical point of view - Remember your new groundbreaking state-of-the-art model you want to submit to the next big conference, it needs to be implemented one way or the other, and if we are lacking that thorough understanding, this will make our job of implementing that model a lot more difficult.&lt;/p&gt;
+
+&lt;p&gt;The good news is that it is not that bad, while we are indeed still far away from complete understanding of neural networks, we do know quite a bit. Enough to know how to debug our model when it isn’t behaving as we expect, and enough to research the field and produce state-of-the-art models, in what seems like daily basis.&lt;/p&gt;
+
+&lt;p&gt;While there are some really great articles of checklists for how to build a good neural network (or fixing your current one) [3,4], trying every single suggestion from these lists is really time consuming and might not be in the right (gradient) direction. This is what this post is about, debugging neural networks — What to do when and why. &lt;strong&gt;Go ahead and skip to the end if you want if-then like suggestions.&lt;/strong&gt;&lt;/p&gt;
+
+&lt;hr style=&quot;width:30%;margin:auto;margin-top:20px;margin-bottom:20px;height:2px;border:none;color:#333;background-color:#333;&quot; /&gt;
+
+&lt;p&gt;For this I decided to present a use case of image segmentation on microscopy live cell images and talk about some of the problems you might encounter.&lt;/p&gt;
+
+&lt;p&gt;Always start by &lt;strong&gt;looking at the data&lt;/strong&gt;, before suggesting a model.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;When you know the lyrics to a tune, you have some kind of insight as to it’s composition. If you don’t understand what it’s about, you’re depriving yourself of being really able to communicate this poem
+Dexter Gordon&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;This quote obviously did not come from Yann LeCun, but from Dexter Gordon, but the thing is, you should be no different. Looking at the data will give you insights about the structure of it that you will not get by looking only on the loss graph.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/implementation-flow-of-neural-networks/dataset.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Looking at the data, I spot two things quite quickly. The first, only 11 640x512 images are given, pretty small dataset. The second, while the segmentation is human made, the edges are not very smooth as you might expect, so perfect segmentation might be a bit out of reach.&lt;/p&gt;
+
+&lt;p&gt;Next thing you should do is read recent literature about similar problems as yours. While this goes without saying to people with research background, this is very important. I decided to implement UNet model [5]. My implementation is a refinement of the model here.&lt;/p&gt;
+
+&lt;script src=&quot;https://gist.github.com/mataney/cf0459589e833df5ec8b3bd8dd8baca8.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;Then I wrote a training paradigm. Notice I cropped each image to 128x128 image to fit our model (and the GPU memory).&lt;/p&gt;
+
+&lt;script src=&quot;https://gist.github.com/mataney/d5c0bb444fb0d3862ea3affff9ef40b8.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;Instantiate a model and train&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;n&quot;&gt;model&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;UNet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;to&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;device&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;train_model&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/implementation-flow-of-neural-networks/bug_in_loss_no_data_aug.png&quot; alt=&quot;&quot; /&gt;
+&lt;em&gt;&lt;br /&gt;Training and Validation loss, first attempt&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Look closer at the y-axis marks, while it looks like a big drop in the beginning, the training loss is (almost) not decreasing at all through the training paradigm, this means our model is not capable to generalize. This indicates we either have a(t least one) bug in our model or the model doesn’t have the capacity of learning the task in hand, that is, it is too weak. (Obviously UNet is known to generalize well for the task of image segmentation so the model is strong enough, but here we want to imitate a scenario where we do not have any a-priori information about the model)&lt;/p&gt;
+
+&lt;p&gt;In order to find if it is a bug or a case of a weak model, we should try to &lt;strong&gt;overfit our model on a small dataset&lt;/strong&gt;. While being able to overfit is not a sufficient condition for the model’s capacity of learning, it is still a necessary condition.&lt;/p&gt;
+
+&lt;p&gt;Let’s look at the training loss of a single example.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/implementation-flow-of-neural-networks/bug_in_loss_no_data_aug_looking_on_a_single_image.png&quot; alt=&quot;&quot; /&gt;
+&lt;em&gt;&lt;br /&gt;Training and Validation loss on a single example&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Even really weak models should be able to generalize better than what we see here, this looks a lot more like a bug.&lt;/p&gt;
+
+&lt;p&gt;Searching for the bug can be difficult. You should start by stripping your model and adding layer by layer to understand where the bug is, while you will not get the desired accuracy when your model is stripped, you expect to get lower loss with each component you add. (This advice is a bit more difficult to implement for NLP models such as seq2seq. IBM, Harvard NLP and CV groups have released this paper recently, I believe is a great tool and an important step towards a better way of debugging neural nets) 
+One downfall I noticed when writing PyTorch code is view vs. transpose vs. permute (Even Andrej Karpathy agrees with me on this). Using one over the other might cause a “silent bug”, that is when matrices’ sizes are as expected but only when looking at the elements multiplied we see a mismatch. This is exactly what happened when I wrote the loss function causing wrong comparison between predictions and gold segmentation. Unless you have a better understanding to when to use view and transpose and permute than me, I believe you should give this step a minute and check if the output is what you expect. Let’s change the loss function to the following way:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;n&quot;&gt;loss&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;criterion&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pred&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;batch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'seg'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;squeeze&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/implementation-flow-of-neural-networks/fix_bug_in_loss_looking_on_a_single_image.png&quot; alt=&quot;&quot; /&gt;
+&lt;em&gt;&lt;br /&gt;Training and Validation loss on a single example —loss function fixed&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Finally we are able to overfit over a single image! Let’s run now on all our dataset. I’m adding a Jaccard accuracy evaluation to get extra information about our performance.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/implementation-flow-of-neural-networks/looking_on_all_no_da_hidden_size_4.png&quot; alt=&quot;&quot; /&gt;
+&lt;em&gt;&lt;br /&gt;Training and Validation loss and Jaccard — loss function fixed&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;We are doing a much better job after fixing that bug. we got much better results on the train set, but we still overfit. While up until now we derived all our conclusion by looking at the loss graph, we can gain much better understanding of the model’s performance and what we should do in order make it better by &lt;strong&gt;looking at examples where it failed and succeeded&lt;/strong&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/implementation-flow-of-neural-networks/looking at examples.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Looking at our predicted segmentation we understand we are not doing that bad of a job, this means we are in the right direction, adding more layers and increasing hyperparameters might be beneficial here.&lt;/p&gt;
+
+&lt;p&gt;By increasing the hidden size of our UNet model we expect it to have a better representation of latent vectors, and by that a better generalization capability. While this is not always beneficial (I can think of a couple of times when the hidden size was too big for the model, and caused degeneration on other layers in the model), you should experiment with different hidden sizes.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;n&quot;&gt;model&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;UNet&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;to&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;device&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/implementation-flow-of-neural-networks/looking_on_all_no_da_hidden_size_64.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;While this is indeed a lot better it looks like we can get the scores even higher.&lt;/p&gt;
+
+&lt;p&gt;Notice in our first model we cropped the images to 128x128 size. While this is vital as our GPU might have difficulties processing the original images we are losing a lot of information taking only the images’ centers.&lt;/p&gt;
+
+&lt;p&gt;This leads us to do better image cropping and &lt;strong&gt;data augmentation&lt;/strong&gt;. While some people tend to do image augmentation first, I believe dealing with smaller datasets at start will shorten the time between each of our working process iterations. Moreover, data augmentation sometimes might be expensive, time consuming or cause human suffering (e.g., medical tests), so sometimes data augmentation is the last resort.&lt;/p&gt;
+
+&lt;script src=&quot;https://gist.github.com/mataney/8caef039d0c5c1211f357cbed0d51b1f.js&quot;&gt;&lt;/script&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/implementation-flow-of-neural-networks/data_aug_bad_lr.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;This is much better!&lt;/p&gt;
+
+&lt;p&gt;Last thing for now, what about the learning rate? I pretty much randomly set it to be 0.1, should I make it bigger? smaller? As Jeremy Howard mentioned in his brilliant fast.ai course [2], you should always use a learning rate finder, as suggested in the equally brilliant paper here (You know what, I’m not gonna compare brilliancy that easily, I will leave it to you to decide). There are some very good posts about this paper, a lot to do with fast.ai popularity, if you want to dive a bit deeper [8, 9].&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;find_lr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;data_iter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;min_lr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mf&quot;&gt;0.00001&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;max_lr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;mul_by&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;max_lr&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;min_lr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;**&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;/&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data_iter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;lr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;min_lr&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;batch&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;enumerate&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data_iter&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;lr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;param_group&lt;/span&gt; &lt;span class=&quot;ow&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;optim&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;param_groups&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;param_group&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'lr'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lr&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;lr&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mul_by&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;loss&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;jac&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;func&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;batch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;loss = &quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;loss&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;I ran this function instead of the &lt;code class=&quot;highlighter-rouge&quot;&gt;run_proc_on_data&lt;/code&gt; function for one epoch, resulting the following losses.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/implementation-flow-of-neural-networks/learning_rate_finder.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In this graph I plotted both the learning rate and the corresponding loss at each timestep. We want to find the minimum of the loss curve, then multiply corresponding learning rate at about 1/10. resulting learning rates around 0.01–0.02. Running with &lt;code class=&quot;highlighter-rouge&quot;&gt;lr=0.01&lt;/code&gt; we get the following performance&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/implementation-flow-of-neural-networks/data_aug_good_lr.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;While this doesn’t look like much, validation set is reaching 85% Jaccard, quite a bit of an upgrade to the previous run. Remember you want to use some sort of early stopping as running for too long on the training set will tend to overfit.&lt;/p&gt;
+
+&lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+
+&lt;p&gt;Looking at our segmentation now it looks like we are doing dramatically better. While we can do much more to try and perfect this score I think this is quite enough for one post.
+We went through a case study of image segmentation and the steps you want to take. Yes, there is a lot more you can do, I didn’t talk about the Xavier initialization I used to control variance in results and the SGDR I implemented (a very good blog post about it here) but without much success.
+While I presented steps you should take when presented with difficulties, I believe the world of debugging neural networks will develop and evolve. 
+Exciting times ahead.&lt;/p&gt;
+
+&lt;h2 id=&quot;tldr&quot;&gt;TL;DR&lt;/h2&gt;
+
+&lt;p&gt;Implementing flow for Neural Nets:
+Start by Looking at a small sample of the data, know the data well before running your model.
+Training loss is not acceptable?&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Try overfitting on a small dataset:
+If not working, look for a bug or understand why the model doesn’t have the capacity of learning and change accordingly&lt;/li&gt;
+  &lt;li&gt;Have a look on the model’s successes and failures.
+Change hyperparameters accordingly; try increasing your hyperparams sizes; change sizes according to the sizes you see in literature.&lt;/li&gt;
+  &lt;li&gt;Use learning rate finder and some learning rate annealing technique.&lt;/li&gt;
+  &lt;li&gt;Look again on the data, look at the training loss for small batch sizes, do we see any outliers, it might be too noisy or including wrong labels.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Training loss is acceptable but validation loss isn’t&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;Data augmentation! (If possible)&lt;/li&gt;
+  &lt;li&gt;Regularization — L2 loss over parameter’s weights and Dropout. Batch normalization known to reduce overfitting as well.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h2 id=&quot;references&quot;&gt;References&lt;/h2&gt;
+
+&lt;p&gt;[1] &lt;a href=&quot;http://www.deeplearningbook.org&quot;&gt;Deep Learning; Goodfellow, Bengio, Courville&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[2] &lt;a href=&quot;https://course.fast.ai&quot;&gt;fast.ai&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[2] &lt;a href=&quot;ttps://medium.com/machine-learning-world/how-to-debug-neural-networks-manual-dc2a200f10f2&quot;&gt;https://medium.com/machine-learning-world/how-to-debug-neural-networks-manual-dc2a200f10f2&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[3] &lt;a href=&quot;https://engineering.semantics3.com/debugging-neural-networks-a-checklist-ca52e11151ec&quot;&gt;https://engineering.semantics3.com/debugging-neural-networks-a-checklist-ca52e11151ec&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[4] &lt;a href=&quot;https://arxiv.org/abs/1505.04597&quot;&gt;https://arxiv.org/abs/1505.04597&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[5] &lt;a href=&quot;https://arxiv.org/pdf/1804.09299&quot;&gt;SEQ2SEQ-VIS : A Visual Debugging Tool for Sequence-to-Sequence Models &lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[6] &lt;a href=&quot;https://arxiv.org/abs/1506.01186&quot;&gt;Cyclical Learning Rates for Training Neural Networks&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[7] &lt;a href=&quot;https://github.com/GunhoChoi/Kind-PyTorch-Tutorial&quot;&gt;Kind-PyTorch-Tutorial&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[8] &lt;a href=&quot;https://miguel-data-sc.github.io/2017-11-05-first/&quot;&gt;https://miguel-data-sc.github.io/2017-11-05-first/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[9] &lt;a href=&quot;https://towardsdatascience.com/understanding-learning-rates-and-how-it-improves-performance-in-deep-learning-d0d4059c1c10&quot;&gt;https://towardsdatascience.com/understanding-learning-rates-and-how-it-improves-performance-in-deep-learning-d0d4059c1c10&lt;/a&gt;&lt;/p&gt;</content><author><name></name></author><summary type="html">Looking back at the time I was a software engineer, when the program didn’t behave as I expected, usually the bug presented itself in all its glory. When I started writing deep neural networks this became less intuitive, a lot less.</summary></entry></feed>

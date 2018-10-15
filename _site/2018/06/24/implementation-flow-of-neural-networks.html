@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>Implementation Flow Of Neural Networks | Blogging with Matan</title>
+<meta name="generator" content="Jekyll v3.8.4" />
+<meta property="og:title" content="Implementation Flow Of Neural Networks" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Looking back at the time I was a software engineer, when the program didn’t behave as I expected, usually the bug presented itself in all its glory. When I started writing deep neural networks this became less intuitive, a lot less." />
+<meta property="og:description" content="Looking back at the time I was a software engineer, when the program didn’t behave as I expected, usually the bug presented itself in all its glory. When I started writing deep neural networks this became less intuitive, a lot less." />
+<link rel="canonical" href="http://localhost:4000/2018/06/24/implementation-flow-of-neural-networks.html" />
+<meta property="og:url" content="http://localhost:4000/2018/06/24/implementation-flow-of-neural-networks.html" />
+<meta property="og:site_name" content="Blogging with Matan" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2018-06-24T00:00:00+03:00" />
+<script type="application/ld+json">
+{"description":"Looking back at the time I was a software engineer, when the program didn’t behave as I expected, usually the bug presented itself in all its glory. When I started writing deep neural networks this became less intuitive, a lot less.","@type":"BlogPosting","url":"http://localhost:4000/2018/06/24/implementation-flow-of-neural-networks.html","headline":"Implementation Flow Of Neural Networks","dateModified":"2018-06-24T00:00:00+03:00","datePublished":"2018-06-24T00:00:00+03:00","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/2018/06/24/implementation-flow-of-neural-networks.html"},"@context":"http://schema.org"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Blogging with Matan" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">Blogging with Matan</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Implementation Flow Of Neural Networks</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2018-06-24T00:00:00+03:00" itemprop="datePublished">Jun 24, 2018
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>Looking back at the time I was a software engineer, when the program didn’t behave as I expected, usually the bug presented itself in all its glory. When I started writing deep neural networks this became less intuitive, a lot less.</p>
+
+<p>While the research of neural networks is blooming, we still lack of thorough understanding of all its nuts and bolts. It doesn’t only hurt us from a theoretical point of view - Remember your new groundbreaking state-of-the-art model you want to submit to the next big conference, it needs to be implemented one way or the other, and if we are lacking that thorough understanding, this will make our job of implementing that model a lot more difficult.</p>
+
+<p>The good news is that it is not that bad, while we are indeed still far away from complete understanding of neural networks, we do know quite a bit. Enough to know how to debug our model when it isn’t behaving as we expect, and enough to research the field and produce state-of-the-art models, in what seems like daily basis.</p>
+
+<p>While there are some really great articles of checklists for how to build a good neural network (or fixing your current one) [3,4], trying every single suggestion from these lists is really time consuming and might not be in the right (gradient) direction. This is what this post is about, debugging neural networks — What to do when and why. <strong>Go ahead and skip to the end if you want if-then like suggestions.</strong></p>
+
+<hr style="width:30%;margin:auto;margin-top:20px;margin-bottom:20px;height:2px;border:none;color:#333;background-color:#333;" />
+
+<p>For this I decided to present a use case of image segmentation on microscopy live cell images and talk about some of the problems you might encounter.</p>
+
+<p>Always start by <strong>looking at the data</strong>, before suggesting a model.</p>
+
+<blockquote>
+  <p>When you know the lyrics to a tune, you have some kind of insight as to it’s composition. If you don’t understand what it’s about, you’re depriving yourself of being really able to communicate this poem
+Dexter Gordon</p>
+</blockquote>
+
+<p>This quote obviously did not come from Yann LeCun, but from Dexter Gordon, but the thing is, you should be no different. Looking at the data will give you insights about the structure of it that you will not get by looking only on the loss graph.</p>
+
+<p><img src="/assets/implementation-flow-of-neural-networks/dataset.png" alt="" /></p>
+
+<p>Looking at the data, I spot two things quite quickly. The first, only 11 640x512 images are given, pretty small dataset. The second, while the segmentation is human made, the edges are not very smooth as you might expect, so perfect segmentation might be a bit out of reach.</p>
+
+<p>Next thing you should do is read recent literature about similar problems as yours. While this goes without saying to people with research background, this is very important. I decided to implement UNet model [5]. My implementation is a refinement of the model here.</p>
+
+<script src="https://gist.github.com/mataney/cf0459589e833df5ec8b3bd8dd8baca8.js"></script>
+
+<p>Then I wrote a training paradigm. Notice I cropped each image to 128x128 image to fit our model (and the GPU memory).</p>
+
+<script src="https://gist.github.com/mataney/d5c0bb444fb0d3862ea3affff9ef40b8.js"></script>
+
+<p>Instantiate a model and train</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="n">model</span> <span class="o">=</span> <span class="n">UNet</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">train_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span></code></pre></figure>
+
+<p><img src="/assets/implementation-flow-of-neural-networks/bug_in_loss_no_data_aug.png" alt="" />
+<em><br />Training and Validation loss, first attempt</em></p>
+
+<p>Look closer at the y-axis marks, while it looks like a big drop in the beginning, the training loss is (almost) not decreasing at all through the training paradigm, this means our model is not capable to generalize. This indicates we either have a(t least one) bug in our model or the model doesn’t have the capacity of learning the task in hand, that is, it is too weak. (Obviously UNet is known to generalize well for the task of image segmentation so the model is strong enough, but here we want to imitate a scenario where we do not have any a-priori information about the model)</p>
+
+<p>In order to find if it is a bug or a case of a weak model, we should try to <strong>overfit our model on a small dataset</strong>. While being able to overfit is not a sufficient condition for the model’s capacity of learning, it is still a necessary condition.</p>
+
+<p>Let’s look at the training loss of a single example.</p>
+
+<p><img src="/assets/implementation-flow-of-neural-networks/bug_in_loss_no_data_aug_looking_on_a_single_image.png" alt="" />
+<em><br />Training and Validation loss on a single example</em></p>
+
+<p>Even really weak models should be able to generalize better than what we see here, this looks a lot more like a bug.</p>
+
+<p>Searching for the bug can be difficult. You should start by stripping your model and adding layer by layer to understand where the bug is, while you will not get the desired accuracy when your model is stripped, you expect to get lower loss with each component you add. (This advice is a bit more difficult to implement for NLP models such as seq2seq. IBM, Harvard NLP and CV groups have released this paper recently, I believe is a great tool and an important step towards a better way of debugging neural nets) 
+One downfall I noticed when writing PyTorch code is view vs. transpose vs. permute (Even Andrej Karpathy agrees with me on this). Using one over the other might cause a “silent bug”, that is when matrices’ sizes are as expected but only when looking at the elements multiplied we see a mismatch. This is exactly what happened when I wrote the loss function causing wrong comparison between predictions and gold segmentation. Unless you have a better understanding to when to use view and transpose and permute than me, I believe you should give this step a minute and check if the output is what you expect. Let’s change the loss function to the following way:</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">batch</span><span class="p">[</span><span class="s">'seg'</span><span class="p">]</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span></code></pre></figure>
+
+<p><img src="/assets/implementation-flow-of-neural-networks/fix_bug_in_loss_looking_on_a_single_image.png" alt="" />
+<em><br />Training and Validation loss on a single example —loss function fixed</em></p>
+
+<p>Finally we are able to overfit over a single image! Let’s run now on all our dataset. I’m adding a Jaccard accuracy evaluation to get extra information about our performance.</p>
+
+<p><img src="/assets/implementation-flow-of-neural-networks/looking_on_all_no_da_hidden_size_4.png" alt="" />
+<em><br />Training and Validation loss and Jaccard — loss function fixed</em></p>
+
+<p>We are doing a much better job after fixing that bug. we got much better results on the train set, but we still overfit. While up until now we derived all our conclusion by looking at the loss graph, we can gain much better understanding of the model’s performance and what we should do in order make it better by <strong>looking at examples where it failed and succeeded</strong>.</p>
+
+<p><img src="/assets/implementation-flow-of-neural-networks/looking at examples.png" alt="" /></p>
+
+<p>Looking at our predicted segmentation we understand we are not doing that bad of a job, this means we are in the right direction, adding more layers and increasing hyperparameters might be beneficial here.</p>
+
+<p>By increasing the hidden size of our UNet model we expect it to have a better representation of latent vectors, and by that a better generalization capability. While this is not always beneficial (I can think of a couple of times when the hidden size was too big for the model, and caused degeneration on other layers in the model), you should experiment with different hidden sizes.</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="n">model</span> <span class="o">=</span> <span class="n">UNet</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span></code></pre></figure>
+
+<p><img src="/assets/implementation-flow-of-neural-networks/looking_on_all_no_da_hidden_size_64.png" alt="" /></p>
+
+<p>While this is indeed a lot better it looks like we can get the scores even higher.</p>
+
+<p>Notice in our first model we cropped the images to 128x128 size. While this is vital as our GPU might have difficulties processing the original images we are losing a lot of information taking only the images’ centers.</p>
+
+<p>This leads us to do better image cropping and <strong>data augmentation</strong>. While some people tend to do image augmentation first, I believe dealing with smaller datasets at start will shorten the time between each of our working process iterations. Moreover, data augmentation sometimes might be expensive, time consuming or cause human suffering (e.g., medical tests), so sometimes data augmentation is the last resort.</p>
+
+<script src="https://gist.github.com/mataney/8caef039d0c5c1211f357cbed0d51b1f.js"></script>
+
+<p><img src="/assets/implementation-flow-of-neural-networks/data_aug_bad_lr.png" alt="" /></p>
+
+<p>This is much better!</p>
+
+<p>Last thing for now, what about the learning rate? I pretty much randomly set it to be 0.1, should I make it bigger? smaller? As Jeremy Howard mentioned in his brilliant fast.ai course [2], you should always use a learning rate finder, as suggested in the equally brilliant paper here (You know what, I’m not gonna compare brilliancy that easily, I will leave it to you to decide). There are some very good posts about this paper, a lot to do with fast.ai popularity, if you want to dive a bit deeper [8, 9].</p>
+
+<figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="k">def</span> <span class="nf">find_lr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">data_iter</span><span class="p">):</span>
+    <span class="n">min_lr</span> <span class="o">=</span> <span class="mf">0.00001</span>
+    <span class="n">max_lr</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">mul_by</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_lr</span><span class="o">/</span><span class="n">min_lr</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_iter</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">lr</span> <span class="o">=</span> <span class="n">min_lr</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data_iter</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">lr</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">param_group</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">param_groups</span><span class="p">:</span>
+            <span class="n">param_group</span><span class="p">[</span><span class="s">'lr'</span><span class="p">]</span> <span class="o">=</span> <span class="n">lr</span>
+        <span class="n">lr</span> <span class="o">*=</span> <span class="n">mul_by</span>
+        <span class="n">loss</span><span class="p">,</span> <span class="n">jac</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">"loss = "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">loss</span><span class="p">))</span></code></pre></figure>
+
+<p>I ran this function instead of the <code class="highlighter-rouge">run_proc_on_data</code> function for one epoch, resulting the following losses.</p>
+
+<p><img src="/assets/implementation-flow-of-neural-networks/learning_rate_finder.png" alt="" /></p>
+
+<p>In this graph I plotted both the learning rate and the corresponding loss at each timestep. We want to find the minimum of the loss curve, then multiply corresponding learning rate at about 1/10. resulting learning rates around 0.01–0.02. Running with <code class="highlighter-rouge">lr=0.01</code> we get the following performance</p>
+
+<p><img src="/assets/implementation-flow-of-neural-networks/data_aug_good_lr.png" alt="" /></p>
+
+<p>While this doesn’t look like much, validation set is reaching 85% Jaccard, quite a bit of an upgrade to the previous run. Remember you want to use some sort of early stopping as running for too long on the training set will tend to overfit.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Looking at our segmentation now it looks like we are doing dramatically better. While we can do much more to try and perfect this score I think this is quite enough for one post.
+We went through a case study of image segmentation and the steps you want to take. Yes, there is a lot more you can do, I didn’t talk about the Xavier initialization I used to control variance in results and the SGDR I implemented (a very good blog post about it here) but without much success.
+While I presented steps you should take when presented with difficulties, I believe the world of debugging neural networks will develop and evolve. 
+Exciting times ahead.</p>
+
+<h2 id="tldr">TL;DR</h2>
+
+<p>Implementing flow for Neural Nets:
+Start by Looking at a small sample of the data, know the data well before running your model.
+Training loss is not acceptable?</p>
+
+<ol>
+  <li>Try overfitting on a small dataset:
+If not working, look for a bug or understand why the model doesn’t have the capacity of learning and change accordingly</li>
+  <li>Have a look on the model’s successes and failures.
+Change hyperparameters accordingly; try increasing your hyperparams sizes; change sizes according to the sizes you see in literature.</li>
+  <li>Use learning rate finder and some learning rate annealing technique.</li>
+  <li>Look again on the data, look at the training loss for small batch sizes, do we see any outliers, it might be too noisy or including wrong labels.</li>
+</ol>
+
+<p>Training loss is acceptable but validation loss isn’t</p>
+<ol>
+  <li>Data augmentation! (If possible)</li>
+  <li>Regularization — L2 loss over parameter’s weights and Dropout. Batch normalization known to reduce overfitting as well.</li>
+</ol>
+
+<h2 id="references">References</h2>
+
+<p>[1] <a href="http://www.deeplearningbook.org">Deep Learning; Goodfellow, Bengio, Courville</a></p>
+
+<p>[2] <a href="https://course.fast.ai">fast.ai</a></p>
+
+<p>[2] <a href="ttps://medium.com/machine-learning-world/how-to-debug-neural-networks-manual-dc2a200f10f2">https://medium.com/machine-learning-world/how-to-debug-neural-networks-manual-dc2a200f10f2</a></p>
+
+<p>[3] <a href="https://engineering.semantics3.com/debugging-neural-networks-a-checklist-ca52e11151ec">https://engineering.semantics3.com/debugging-neural-networks-a-checklist-ca52e11151ec</a></p>
+
+<p>[4] <a href="https://arxiv.org/abs/1505.04597">https://arxiv.org/abs/1505.04597</a></p>
+
+<p>[5] <a href="https://arxiv.org/pdf/1804.09299">SEQ2SEQ-VIS : A Visual Debugging Tool for Sequence-to-Sequence Models </a></p>
+
+<p>[6] <a href="https://arxiv.org/abs/1506.01186">Cyclical Learning Rates for Training Neural Networks</a></p>
+
+<p>[7] <a href="https://github.com/GunhoChoi/Kind-PyTorch-Tutorial">Kind-PyTorch-Tutorial</a></p>
+
+<p>[8] <a href="https://miguel-data-sc.github.io/2017-11-05-first/">https://miguel-data-sc.github.io/2017-11-05-first/</a></p>
+
+<p>[9] <a href="https://towardsdatascience.com/understanding-learning-rates-and-how-it-improves-performance-in-deep-learning-d0d4059c1c10">https://towardsdatascience.com/understanding-learning-rates-and-how-it-improves-performance-in-deep-learning-d0d4059c1c10</a></p>
+
+  </div><a class="u-url" href="/2018/06/24/implementation-flow-of-neural-networks.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Blogging with Matan</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">Blogging with Matan</li><li><a class="u-email" href="mailto:mataneyal1@gmail.com">mataneyal1@gmail.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/mataney"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">mataney</span></a></li><li><a href="https://www.twitter.com/mataneyal1"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">mataneyal1</span></a></li></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>Blogging with Matan about NLP and Deep Learning</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
