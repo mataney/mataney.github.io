@@ -1,5 +1,6 @@
 ---
 layout: post
+thumbnail: "assets/implementation-flow-of-neural-networks/deconv_pic.png"
 ---
 
 

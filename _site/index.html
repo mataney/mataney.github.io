@@ -1,74 +1,289 @@
 <!DOCTYPE html>
-<html lang="en"><head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.5.0 -->
-<title>Blogging with Matan | Blogging with Matan about NLP and Deep Learning</title>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+    <!-- Main JS (navbar.js, katex_init.js and masonry_init.js)-->
+    <script defer=true src="/assets/js/main.min.js"></script>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/assets/css/main.css">
+
+    <!--Favicon-->
+    <link rel="shortcut icon" href="/assets/img/my_cartoon.png" type="image/x-icon">
+
+    <!-- Canonical -->
+    <link rel="canonical" href="http://localhost:4000/">
+
+    <!-- RSS -->
+    <link rel="alternate" type="application/atom+xml" title="Matan Eyal" href="http://localhost:4000///feed.xml"/>
+
+    <!-- Font Awesome -->
+    <!-- <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"> -->
+    <link rel="stylesheet" type="text/css" href="/assets/css/vendor/font-awesome.min.css">
+    
+    
+
+    <!-- Google Fonts -->
+    
+    <link href="//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700,700italic,400italic" rel="stylesheet" type="text/css"> 
+    
+
+    <!-- KaTeX 0.8.3 -->
+    
+    <link rel="stylesheet" type="text/css" href="/assets/css/vendor/katex.min.css">
+    <script src="/assets/js/vendor/katex.min.js">
+    </script>
+    
+
+    <!-- Google Analytics -->
+    
+    
+    <!-- seo tags -->
+    <!-- Begin Jekyll SEO tag v2.5.0 -->
+<title>Matan Eyal | Matan Eyal - Mostly Blogging About NLP and DL</title>
 <meta name="generator" content="Jekyll v3.8.4" />
-<meta property="og:title" content="Blogging with Matan" />
+<meta property="og:title" content="Matan Eyal" />
 <meta property="og:locale" content="en_US" />
-<meta name="description" content="Blogging with Matan about NLP and Deep Learning" />
-<meta property="og:description" content="Blogging with Matan about NLP and Deep Learning" />
+<meta name="description" content="Matan Eyal - Mostly Blogging About NLP and DL" />
+<meta property="og:description" content="Matan Eyal - Mostly Blogging About NLP and DL" />
 <link rel="canonical" href="http://localhost:4000/" />
 <meta property="og:url" content="http://localhost:4000/" />
-<meta property="og:site_name" content="Blogging with Matan" />
+<meta property="og:site_name" content="Matan Eyal" />
 <script type="application/ld+json">
-{"name":"Blogging with Matan","description":"Blogging with Matan about NLP and Deep Learning","@type":"WebSite","url":"http://localhost:4000/","headline":"Blogging with Matan","@context":"http://schema.org"}</script>
+{"name":"Matan Eyal","description":"Matan Eyal - Mostly Blogging About NLP and DL","@type":"WebSite","url":"http://localhost:4000/","headline":"Matan Eyal","@context":"http://schema.org"}</script>
 <!-- End Jekyll SEO tag -->
-<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/feed.xml" title="Blogging with Matan" /></head>
-<body><header class="site-header" role="banner">
 
-  <div class="wrapper"><a class="site-title" rel="author" href="/">Blogging with Matan</a><nav class="site-nav">
-        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
-        <label for="nav-trigger">
-          <span class="menu-icon">
-            <svg viewBox="0 0 18 15" width="18px" height="15px">
-              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
-            </svg>
-          </span>
-        </label>
+    <!-- Manual seo tags -->
+    <!--
+    <title> Matan Eyal</title>
+    <meta name="description" content="">
+    -->
+</head>
 
-        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
-      </nav></div>
+  <body>
+    <header class="site-header">
+    
+    <!-- Logo and title -->
+	<div class="branding">
+		<a href="/">
+			<img class="avatar" src="/assets/img/my_cartoon.png" alt=""/>
+		</a>
+
+		<h1 class="site-title">
+			<a href="/">Matan Eyal</a>
+		</h1>
+	</div>
+    
+    <!-- Toggle menu -->
+    <nav class="clear">
+    <a id="pull" class="toggle" href="#">
+    <i class="fa fa-bars fa-lg"></i>
+    </a>
+    
+    <!-- Menu -->
+    <ul class="hide">
+        <!-- Auto Generation of NORMAL pages in the navbar -->
+        
+        
+        
+        
+        
+        
+        
+        <li class="separator"> | </li>
+        <li>
+            <a class="clear" href="/about/">
+                About
+            </a>
+        </li>
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+         
+        
+        <!-- Auto Generation of SPECIAL pages in the navbar -->
+        
+    </ul>
+        
+	</nav>
 </header>
-<main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <div class="home">
-<h2 class="post-list-heading">Posts</h2>
-    <ul class="post-list"><li><span class="post-meta">Jun 24, 2018</span>
-        <h3>
-          <a class="post-link" href="/2018/06/24/implementation-flow-of-neural-networks.html">
-            Implementation Flow Of Neural Networks
-          </a>
-        </h3></li></ul>
 
-    <p class="rss-subscribe">subscribe <a href="/feed.xml">via RSS</a></p></div>
-
-      </div>
-    </main><footer class="site-footer h-card">
-  <data class="u-url" href="/"></data>
-
-  <div class="wrapper">
-
-    <h2 class="footer-heading">Blogging with Matan</h2>
-
-    <div class="footer-col-wrapper">
-      <div class="footer-col footer-col-1">
-        <ul class="contact-list">
-          <li class="p-name">Blogging with Matan</li><li><a class="u-email" href="mailto:mataneyal1@gmail.com">mataneyal1@gmail.com</a></li></ul>
-      </div>
-
-      <div class="footer-col footer-col-2"><ul class="social-media-list"><li><a href="https://github.com/mataney"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> <span class="username">mataney</span></a></li><li><a href="https://www.twitter.com/mataneyal1"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg> <span class="username">mataneyal1</span></a></li></ul>
-</div>
-
-      <div class="footer-col footer-col-3">
-        <p>Blogging with Matan about NLP and Deep Learning</p>
-      </div>
-    </div>
+    <div class="content">
+      <div class="home">
+  
+  <div id="main" class="call-out"
+  style="background-image: url('/assets/img/black.jpg')">
+    Matan Eyal - Mostly Blogging About NLP and DL
 
   </div>
+  
 
+  <div class="posts">
+    
+    <div class="post-teaser">
+       
+      <div class="post-img">
+         <img src="/assets/VAE/var_inf.png">
+      </div>
+      
+      <span>
+          <header>
+            <h1>
+              <a class="post-link" href="/2018/10/20/understanding-variational-autoencoders.html">
+                Understanding Variational Autoencoders
+              </a>
+            </h1>
+            <p class="meta">
+              October 20, 2018
+            </p>
+          </header>
+          <div class="excerpt">
+              STILL A DRAFT
+
+
+            <!--STILL A DRAFT
+
+In this post I attempt to describe Variational Autoencoders (VAE) both from a theoretical and a practical point of view. The first paper to introduce VAE [Kingma et al. 2014] assumes the reader knows quite a bit regarding Variationa...-->
+            <!--<a class="button" href="/2018/10/20/understanding-variational-autoencoders.html">
+              Continue reading
+            </a>-->
+          </div>
+      </span>
+    </div>
+    
+    <div class="post-teaser">
+       
+      <div class="post-img">
+         <img src="/assets/implementation-flow-of-neural-networks/deconv_pic.png">
+      </div>
+      
+      <span>
+          <header>
+            <h1>
+              <a class="post-link" href="/2018/06/24/implementation-flow-of-neural-networks.html">
+                Implementation Flow Of Neural Networks
+              </a>
+            </h1>
+            <p class="meta">
+              June 24, 2018
+            </p>
+          </header>
+          <div class="excerpt">
+              Looking back at the time I was a software engineer, when the program didn’t behave as I expected, usually the bug presented itself in all its glory. When I started writing deep neural networks this became less intuitive, a lot less.
+
+
+            <!--Looking back at the time I was a software engineer, when the program didn’t behave as I expected, usually the bug presented itself in all its glory. When I started writing deep neural networks this became less intuitive, a lot less.
+
+While the res...-->
+            <!--<a class="button" href="/2018/06/24/implementation-flow-of-neural-networks.html">
+              Continue reading
+            </a>-->
+          </div>
+      </span>
+    </div>
+    
+  </div>
+
+  
+</div>
+
+    </div>
+    
+<footer class="site-footer">
+    <p class="text">Powered by <a href="https://jekyllrb.com/">Jekyll</a> with <a href="https://github.com/sylhare/Type-on-Strap">Type on Strap</a>
+</p>
+            <div class="footer-icons">
+                <ul>
+                <!-- Social icons from Font Awesome, if enabled -->
+                
+<li>
+	<a href="http://localhost:4000/feed.xml" title="Follow RSS feed">
+		<span class="fa-stack fa-lg">
+            <i class="fa fa-circle fa-stack-2x"></i>
+            <i class="fa fa-rss fa-stack-1x fa-inverse"></i>
+        </span>
+	</a>
+</li>
+
+
+
+<li>
+	<a href="mailto:mataneyal1@gmail.com" title="Email">
+		<span class="fa-stack fa-lg">
+            <i class="fa fa-circle fa-stack-2x"></i>
+            <i class="fa fa-envelope fa-stack-1x fa-inverse"></i>
+        </span>
+	</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li>
+	<a href="https://github.com/mataney" title="Follow on GitHub">
+		<span class="fa-stack fa-lg">
+            <i class="fa fa-circle fa-stack-2x"></i>
+            <i class="fa fa-github fa-stack-1x fa-inverse"></i>
+        </span>
+	</a>
+</li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                </ul>
+            </div>
 </footer>
-</body>
 
+
+
+
+  </body>
 </html>

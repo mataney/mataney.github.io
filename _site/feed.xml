@@ -1,4 +1,323 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="3.8.4">Jekyll</generator><link href="http://localhost:4000/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/" rel="alternate" type="text/html" /><updated>2018-10-15T22:52:49+03:00</updated><id>http://localhost:4000/feed.xml</id><title type="html">Blogging with Matan</title><subtitle>Blogging with Matan about NLP and Deep Learning</subtitle><entry><title type="html">Implementation Flow Of Neural Networks</title><link href="http://localhost:4000/2018/06/24/implementation-flow-of-neural-networks.html" rel="alternate" type="text/html" title="Implementation Flow Of Neural Networks" /><published>2018-06-24T00:00:00+03:00</published><updated>2018-06-24T00:00:00+03:00</updated><id>http://localhost:4000/2018/06/24/implementation-flow-of-neural-networks</id><content type="html" xml:base="http://localhost:4000/2018/06/24/implementation-flow-of-neural-networks.html">&lt;p&gt;Looking back at the time I was a software engineer, when the program didn’t behave as I expected, usually the bug presented itself in all its glory. When I started writing deep neural networks this became less intuitive, a lot less.&lt;/p&gt;
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Matan Eyal</title>
+        <atom:link href="/feed.xml" rel="self" type="application/rss+xml"/>
+        <link>http://localhost:4000/</link>
+        <description></description>
+        <pubDate>Sun, 21 Oct 2018 18:19:01 +0300</pubDate>
+        
+        <item>
+            <title>Understanding Variational Autoencoders</title>
+            <link>/2018/10/20/understanding-variational-autoencoders.html</link>
+            <guid isPermaLink="true">/2018/10/20/understanding-variational-autoencoders.html</guid>
+            <description>&lt;p&gt;STILL A DRAFT&lt;/p&gt;
+
+&lt;p&gt;In this post I attempt to describe Variational Autoencoders (VAE) both from a theoretical and a practical point of view. The first paper to introduce VAE [Kingma et al. 2014] assumes the reader knows quite a bit regarding Variational Inference (VI). After a really quick overview of vanilla autoencoders, i will take the same route the authors took in the original paper but will take a closer look on VI. Then, we will look at the intersection between autoencoders and VI, the variational autoencoder.&lt;/p&gt;
+
+&lt;h1 id=&quot;autoencoders&quot;&gt;Autoencoders&lt;/h1&gt;
+
+&lt;p&gt;Generally speaking, an autoencoder is an unsupervised method designed to reconstruct some input data &lt;script type=&quot;math/tex&quot;&gt;\textbf{x} \in X&lt;/script&gt;. The main feature of the autoencoder is the ability to learn a concise representation of the features of &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt;, &lt;i&gt;i.e.&lt;/i&gt;, &lt;script type=&quot;math/tex&quot;&gt;\textbf{z} \in Z&lt;/script&gt;, while being able to reconstruct &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt; from &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt;. In order to create the reconstruction &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}'&lt;/script&gt; the autoencoder uses two functions. The first, an encoder, denoted by &lt;script type=&quot;math/tex&quot;&gt;q_\phi(\textbf{x} \mid \textbf{z})&lt;/script&gt;, and a decoder, denoted by &lt;script type=&quot;math/tex&quot;&gt;p_\theta(\textbf{z} \mid \textbf{x})&lt;/script&gt;, with parameters &lt;script type=&quot;math/tex&quot;&gt;\phi,~\theta&lt;/script&gt; respectively. Notice that &lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+\dim(\textbf{z}) &lt; \dim(\textbf{x}) %]]&gt;&lt;/script&gt; otherwise the model will not learn anything of use. We want to minimize the reconstruction loss using some loss function, for example the MSE:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\phi, \theta = \arg\,min_{\phi, \theta} \| \textbf{x} - p_\theta(q_\phi(\textbf{x}))\|^2&lt;/script&gt;
+
+&lt;p&gt;From a coding theory perspective, the encoder takes the input, or observed variable, &lt;script type=&quot;math/tex&quot;&gt;\textbf{x} \in X&lt;/script&gt; and maps it, usually using Multi Layer Perceptron (MLP), to a latent or hidden variable, or code, &lt;script type=&quot;math/tex&quot;&gt;\textbf{z} \in Z&lt;/script&gt;. Then the decoder maps &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt;, again, using an MLP, to the reconstruction &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}'&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;Throughout reading this post, lets think of &lt;script type=&quot;math/tex&quot;&gt;X \sim p_{\theta^*}(\textbf{x})&lt;/script&gt; as distribution of digit drawings, as the ones in the bottom. So the autoencoder’s goal is to get &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt;, an image of a digit, “shrink” its representation to a smaller dimention &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt;, then reconstructing &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt;, while not losing (much) information.&lt;/p&gt;
+
+&lt;h1 id=&quot;method&quot;&gt;Method&lt;/h1&gt;
+&lt;h2 id=&quot;problem-scenario&quot;&gt;Problem Scenario&lt;/h2&gt;
+
+&lt;p&gt;Given this, we notice that autoencoders fit the latent variable model paradigm, in which we assume the observable data &lt;script type=&quot;math/tex&quot;&gt;\textbf{x} \in X&lt;/script&gt; is generated by some random process involving the continuous latent variables &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt;. &lt;i&gt;i.e.&lt;/i&gt;, We generate &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt; from the prior distribution &lt;script type=&quot;math/tex&quot;&gt;p_{\theta^*}(\textbf{z})&lt;/script&gt;, then &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt; is generated from the conditional distribution &lt;script type=&quot;math/tex&quot;&gt;p_{\theta^*}(\textbf{x} \mid \textbf{z})&lt;/script&gt;. Where the distributions &lt;script type=&quot;math/tex&quot;&gt;p_{\theta}(\textbf{z})&lt;/script&gt;, &lt;script type=&quot;math/tex&quot;&gt;p_{\theta}(\textbf{x} \mid \textbf{z})&lt;/script&gt; depend on some parameters &lt;script type=&quot;math/tex&quot;&gt;\mathbf{\theta}&lt;/script&gt;. Notice that we do not have any information regarding the real values of &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt; or the optimum value of parameters &lt;script type=&quot;math/tex&quot;&gt;\theta^*&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;(A note regarding notation. A more verbose notation could be: &lt;script type=&quot;math/tex&quot;&gt;p_{\theta_1}(\textbf{z})&lt;/script&gt;, &lt;script type=&quot;math/tex&quot;&gt;p_{\theta_2}(\textbf{x} \mid \textbf{z})&lt;/script&gt; are parametric functions and the real values of &lt;script type=&quot;math/tex&quot;&gt;\theta = (\theta_1, \theta_2)&lt;/script&gt; are unknown. We will use the former notation for consistency with Kingma et al.’s paper)&lt;/p&gt;
+
+&lt;h3 id=&quot;generation-process&quot;&gt;Generation Process&lt;/h3&gt;
+
+&lt;p&gt;In addition to the reconstruction goal defined in the autoencoders section, we would like to be able to execute a generation process: Assume you can generate &lt;script type=&quot;math/tex&quot;&gt;\textbf{z} \sim p(\textbf{z})&lt;/script&gt;, generate &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt; from &lt;script type=&quot;math/tex&quot;&gt;p_\theta(\textbf{x} \mid \textbf{z})&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;Why is this a generative process?&lt;/p&gt;
+
+&lt;p&gt;Again, think of &lt;script type=&quot;math/tex&quot;&gt;X&lt;/script&gt; as a set of images. These images come from some distribution &lt;script type=&quot;math/tex&quot;&gt;p_{\theta^*}(\textbf{x})&lt;/script&gt; we know nothing about. But if we can find the conditional distribution &lt;script type=&quot;math/tex&quot;&gt;p_{\theta}(\textbf{x} \mid \textbf{z})&lt;/script&gt; (And we know &lt;script type=&quot;math/tex&quot;&gt;p_{\theta}(\textbf{z})&lt;/script&gt;) we can generate images!&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/VAE/generator2.png&quot; alt=&quot;&quot; /&gt;
+&lt;br /&gt;&lt;em&gt;The Generation Process&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Specifically, we would like to find &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; such that will maximize &lt;script type=&quot;math/tex&quot;&gt;p_\theta(\textbf{x})&lt;/script&gt; for training images &lt;script type=&quot;math/tex&quot;&gt;X&lt;/script&gt;, via the generation process &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{x} \mid \textbf{z})&lt;/script&gt;: Optimize parameters &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; such that the generative process &lt;script type=&quot;math/tex&quot;&gt;p_\theta(\textbf{x} \mid \textbf{z})&lt;/script&gt; will return &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}'&lt;/script&gt; that are as close to the &lt;script type=&quot;math/tex&quot;&gt;\textbf{x} \in X&lt;/script&gt;.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\max_\theta p_\theta(\textbf{x}) = \max_\theta \int_z p(\textbf{z})p_\theta(\textbf{x} \mid \textbf{z})&lt;/script&gt;
+
+&lt;p&gt;Great, to compute this integral we only need to go over all possible &lt;script type=&quot;math/tex&quot;&gt;Z&lt;/script&gt; and maximize &lt;script type=&quot;math/tex&quot;&gt;p_\theta(\textbf{x} \mid \textbf{z})&lt;/script&gt; - The thing is, this is intractable.&lt;/p&gt;
+
+&lt;p&gt;Think about a simpler case, assume &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt; is a boolean vector in &lt;script type=&quot;math/tex&quot;&gt;d&lt;/script&gt; dimensions, then there are &lt;script type=&quot;math/tex&quot;&gt;2^d&lt;/script&gt; possible configurations of &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt;, which is exponential in &lt;script type=&quot;math/tex&quot;&gt;d&lt;/script&gt; and well too big to integrate over. Our case is much worse, &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt; is continuous.&lt;/p&gt;
+
+&lt;p&gt;To recap, we want to be able to generate data using &lt;script type=&quot;math/tex&quot;&gt;p_\theta(\textbf{x} \mid \textbf{z})&lt;/script&gt;, we understand we can learn a generative process by maximizing  &lt;script type=&quot;math/tex&quot;&gt;\max_\theta p_\theta(\textbf{x})&lt;/script&gt;, but this is intractable. Let’s leave this for a bit, but don’t forget this is our goal, and discuss another problem that might help us with this later.&lt;/p&gt;
+
+&lt;h1 id=&quot;sidetracking-introduction-to-variational-and-posterior-inference&quot;&gt;Sidetracking, Introduction to Variational and Posterior Inference&lt;/h1&gt;
+
+&lt;p&gt;In VI, just as before, we think of the data distribution as the marginal distribution of this:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;p(\textbf{x}) = \int_z p(\textbf{x}, \textbf{z}) = \int_z p(\textbf{z}) p(\textbf{x} \mid \textbf{z})&lt;/script&gt;
+
+&lt;p&gt;In the previous section we wanted to infer about the likelihood &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{x} \mid \textbf{z})&lt;/script&gt; but we hit a brick wall. Let’s look at this from another point of view and try to infer about the posterior, &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt;. In order to do this we will use VI, a method that approximates probability densities through optimization. The probability density we want to approximate is the posterior, the conditional distribution of the hidden variables given the observed variables.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;p(\textbf{z} \mid \textbf{x}) = \frac{p(\textbf{z}, \textbf{x})}{p(\textbf{x})}&lt;/script&gt;
+
+&lt;p&gt;The thing is, the denominator, &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{x})&lt;/script&gt;, as we saw beforehand, is intractable. VI suggest to find another distribution that we know how to sample from and is close to the original posterior distribution, &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/VAE/var_inf.png&quot; alt=&quot;&quot; /&gt;
+&lt;em&gt;&lt;br /&gt;Image from &lt;a href=&quot;https://www.youtube.com/watch?v=ogdv6dbvVQ&quot;&gt;this&lt;/a&gt; NIPS tutorial. Notice in this post we use &lt;script type=&quot;math/tex&quot;&gt;\phi&lt;/script&gt; instead of &lt;script type=&quot;math/tex&quot;&gt;\nu&lt;/script&gt; as the distribution parameters.&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Formally, Variational Inference suggest that instead of trying to infer about something we don’t know how to compute, lets try to optimize the proximity of a new distribution &lt;script type=&quot;math/tex&quot;&gt;q_\phi(\textbf{z} \mid \textbf{x})&lt;/script&gt; to the original posterior &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt;. How does it work? Select a variational family of distributions over the latent variables we know how to sample from, denoted by &lt;script type=&quot;math/tex&quot;&gt;Q_\phi(\textbf{z})&lt;/script&gt;. Choose some parametric distribution &lt;script type=&quot;math/tex&quot;&gt;q_\phi(\textbf{z} \mid \textbf{x}) \in Q_\phi(\textbf{z})&lt;/script&gt;. Then, search for &lt;script type=&quot;math/tex&quot;&gt;\phi&lt;/script&gt; that approximates &lt;script type=&quot;math/tex&quot;&gt;q_{\phi}(\textbf{z} \mid \textbf{x})&lt;/script&gt; to &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt;. Now we can approximating sampling from &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt; by sampling from &lt;script type=&quot;math/tex&quot;&gt;q_{\phi}(\textbf{z} \mid \textbf{x})&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;For example, assume we want to find approximation to &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt; we hypothesis@@(check this is the right word) that it can be approximated by a normal distribution with some mean and variance. Denote &lt;script type=&quot;math/tex&quot;&gt;Q_\phi(\textbf{z})&lt;/script&gt; as the family of normal distributions &lt;script type=&quot;math/tex&quot;&gt;\mathcal{N}(\phi_{\mu}, \phi_{\sigma^2})&lt;/script&gt;. We are looking for &lt;script type=&quot;math/tex&quot;&gt;\phi^*&lt;/script&gt; such that &lt;script type=&quot;math/tex&quot;&gt;q_{\phi^*}(z)=\mathcal{N}(\phi_{\mu^*}, \phi_{\sigma^*})&lt;/script&gt;  is as close as possible to the real posterior, &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;Why is this easier then our original question? our goal now is optimizing and not inferring, and optimizing is something we do quite a lot, just use your favorite gradient decent algorithm.&lt;/p&gt;
+
+&lt;p&gt;(Another note regarding notation. In VI we indeed look for some distribution &lt;script type=&quot;math/tex&quot;&gt;q_\phi(\textbf{z})&lt;/script&gt; approximating &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt; that may or may not depend on input &lt;script type=&quot;math/tex&quot;&gt;x&lt;/script&gt;. In Kingma et al.’s paper we also care about &lt;script type=&quot;math/tex&quot;&gt;q_\theta(\cdot)&lt;/script&gt; with respect to the input (Think about the reconstruction process). For this reason we specifically look for a distribution that depends on the input, so from now on, we note this as &lt;script type=&quot;math/tex&quot;&gt;q_\phi(\textbf{z} \mid \textbf{x})&lt;/script&gt;)&lt;/p&gt;
+
+&lt;p&gt;So our optimization problem now, for the posterior inference, is minimizing the proximity of  &lt;script type=&quot;math/tex&quot;&gt;q_\phi(\textbf{z} \mid \textbf{x})&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt;. Usually (but not always) in VI, closeness is defined by the Kullback–Leibler divergence defined over distributions &lt;script type=&quot;math/tex&quot;&gt;p(x)&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;q(x)&lt;/script&gt; by&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{aligned}
+D_{KL}(q \Vert p) = \int_x q(x) \log \frac{q(x)}{p(x)}
+\end{aligned}&lt;/script&gt;
+
+&lt;p&gt;Or for the minimization problem of our two distributions:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+\min_\phi D_{KL}(q_\phi(\textbf{z} \mid \textbf{x}) \Vert p(\textbf{z} \mid \textbf{x})) &amp;= \int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{q_\phi(\textbf{z} \mid \textbf{x})}{p(\textbf{z} \mid \textbf{x})} dz
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;The second input to the KL divergence is the same posterior distribution we want to find, so we can’t compute it. Let’s see if there’s anything else we can say about this equation.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+D_{KL}(q_\phi(\textbf{z} \mid \textbf{x}) \Vert p(\textbf{z} \mid \textbf{x})) &amp;= \int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{q_\phi(\textbf{z} \mid \textbf{x})}{p(\textbf{z} \mid \textbf{x})} dz \\
+    &amp;= \int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{q_\phi(\textbf{z} \mid \textbf{x}) p(\textbf{x})}{p(\textbf{z} , \textbf{x})} dz \\
+    &amp;= \int_{z} q_\phi (\textbf{z} \mid \textbf{x}) (\log \frac{q_\phi(\textbf{z} \mid \textbf{x})}{p(\textbf{z} , \textbf{x})} + \log p(\textbf{x})) dz \\
+    &amp;= \int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{q_\phi(\textbf{z} \mid \textbf{x})}{p(\textbf{z} , \textbf{x})}dz + \int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log p(\textbf{x}) dz\\
+    &amp;= \int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{q_\phi(\textbf{z} \mid \textbf{x})}{p(\textbf{z} , \textbf{x})}dz + \log p(\textbf{x}) \int_{z} q_\phi (\textbf{z} \mid \textbf{x}) dz\\
+    &amp;=  \int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{q_\phi(\textbf{z} \mid \textbf{x})}{p(\textbf{z} , \textbf{x})}dz + \log p(\textbf{x})\\
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Define &lt;script type=&quot;math/tex&quot;&gt;L(\phi; \textbf{x})&lt;/script&gt; to be the negation of the first term:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+L(\phi; \textbf{x}) = -\int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{q_\phi(\textbf{z} \mid \textbf{x})}{p(\textbf{z} , \textbf{x})}dz &amp;= \int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{p(\textbf{z}, \textbf{x})}{q_\phi(\textbf{z} \mid \textbf{x})}dz\\
+&amp;= \int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{p(\textbf{z})p(\textbf{x} \mid \textbf{z})}{q_\phi(\textbf{z} \mid \textbf{x})}dz
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;And we get:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+    \log p(\textbf{x}) &amp;= D_{KL}(q_\phi(\textbf{z} \mid \textbf{x}) \Vert P(\textbf{z} \mid \textbf{x})) + L(\phi; \textbf{x}) \\
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Do you remember I said Kingma et al. assumes quite a bit about the readers knowledge in VI, this is (almost) equation 1 in their paper.&lt;/p&gt;
+
+&lt;p&gt;The first term in the RHS is always positive, so the second term is the lower bound of the equation, and by that of &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{x})&lt;/script&gt;, the evidence. For this reason &lt;script type=&quot;math/tex&quot;&gt;L(\phi; \textbf{x})&lt;/script&gt; is known as the Evidence Lower BOund or ELBO.&lt;/p&gt;
+
+&lt;h1 id=&quot;back-on-track&quot;&gt;Back on Track&lt;/h1&gt;
+
+&lt;p&gt;Recall our original goal, we wanted to maximize &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{x})&lt;/script&gt;, but we couldn’t write it in a tractable form. The above equation means instead of directly maximizing &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{x})&lt;/script&gt;, we can maximize its lower bound.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;\begin{aligned}
+\max_\phi L(\phi; \textbf{x})
+\end{aligned}&lt;/script&gt;
+
+&lt;p&gt;Notice another thing, &lt;script type=&quot;math/tex&quot;&gt;L(\phi; \textbf{x})&lt;/script&gt;’s final derivation in Eq. @@ has the generation probability &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{x} \mid \textbf{z})&lt;/script&gt; in it. We can learn both the posterior and the generation parametric distributions together by proposing a new parametric distribution &lt;script type=&quot;math/tex&quot;&gt;p_\theta(\textbf{x} \mid \textbf{z})&lt;/script&gt;.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+\max_{\theta,\phi} L(\theta,\phi; \textbf{x}) &amp;= \int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{p(\textbf{z})p_\theta(\textbf{x} \mid \textbf{z})}{q_\phi(\textbf{z} \mid \textbf{x})}dz\\
+&amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [-\log q_\phi(\textbf{z} \mid \textbf{x}) +\log p_\theta(\textbf{x}, \textbf{z})]
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;@@image of both the encoder and the decoder&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;L(\theta,\phi; \textbf{x})&lt;/script&gt; is now expressed as an estimation. Using Monte Carlo estimate we can estimate it as its average: Generate &lt;script type=&quot;math/tex&quot;&gt;L&lt;/script&gt; different &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt; samples and average the inner function of &lt;script type=&quot;math/tex&quot;&gt;L(\theta,\phi; \textbf{x})&lt;/script&gt;&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+\widetilde{L}(\theta,\phi; x) &amp;= \frac{1}{L} \sum_{l=1}^L \log p_\theta(\textbf{x}, \textbf{z}^{(l)}) - \log q_\phi(\textbf{z}^{(l)} \mid \textbf{x})\\
+\text{where}~ \textbf{z}^{(l)} &amp;\sim q_\phi (\textbf{z} \mid \textbf{x})
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Finally we have a function we can optimize, recall gradient decent algorithms optimization step (&lt;script type=&quot;math/tex&quot;&gt;w_{i+1} = w_i - \lambda\nabla L(w_i)&lt;/script&gt; for some rate &lt;script type=&quot;math/tex&quot;&gt;\lambda&lt;/script&gt;), we now need to compute the gradient of &lt;script type=&quot;math/tex&quot;&gt;L(\theta,\phi; \textbf{x})&lt;/script&gt; with respect to both &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;\phi&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;The gradient with respect to &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt;, &lt;script type=&quot;math/tex&quot;&gt;\nabla_\theta&lt;/script&gt;,  is fairly straight forward because we can push the gradient inside the sum:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+\nabla_\theta\widetilde{L}(\theta,\phi; x) =&amp; \frac{1}{L} \sum_{l=1}^L \nabla_\theta\log q_\phi(\textbf{z}^{(l)} \mid \textbf{x})\\
+\text{where}~&amp; \textbf{z}^{(l)} \sim q_\phi (\textbf{z} \mid \textbf{x})
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Doing the same for &lt;script type=&quot;math/tex&quot;&gt;\nabla_\phi&lt;/script&gt; is not possible as we sample &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}^{(l)}&lt;/script&gt; from &lt;script type=&quot;math/tex&quot;&gt;q_\phi (\textbf{z} \mid \textbf{x})&lt;/script&gt; which depends on &lt;script type=&quot;math/tex&quot;&gt;\phi&lt;/script&gt;. While we can find a gradient estimate using the Log Derivative Trick, empirically, these gradients are too large.&lt;/p&gt;
+
+&lt;p&gt;Why does it matter? In optimization, the variance of the gradient is more important than the value of the function itself. The gradient impacts the practicability and the speed of the convergence of the optimization problem, so this is not quite the solution we were looking for. (Interestingly though, the result of the gradient using the Log Derivative Trick is just like REINFORCE, sometimes also called the likelihood ratio)&lt;/p&gt;
+
+&lt;p&gt;If we can’t push the gradient inside the sum because &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}^{(l)}&lt;/script&gt; is sampled from &lt;script type=&quot;math/tex&quot;&gt;q_\phi (\textbf{z} \mid \textbf{x})&lt;/script&gt;, can we sample &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}^{(l)}&lt;/script&gt; independently of &lt;script type=&quot;math/tex&quot;&gt;\phi&lt;/script&gt; while still &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}^{(l)} \sim q_\phi (\textbf{z} \mid \textbf{x})&lt;/script&gt;? What Kingma et al. suggested as a solution, known as the reparameterization trick, is to sample &lt;script type=&quot;math/tex&quot;&gt;\textbf{z} \sim q_\phi (\textbf{z} \mid \textbf{x})&lt;/script&gt; using a new auxiliary parameter-free variable &lt;script type=&quot;math/tex&quot;&gt;\epsilon \sim p(\epsilon)&lt;/script&gt; (&lt;script type=&quot;math/tex&quot;&gt;\epsilon&lt;/script&gt; is a vector, having trouble bolding it), and a parametric function &lt;script type=&quot;math/tex&quot;&gt;g_\phi(\cdot)&lt;/script&gt;, such that now &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt; is a deterministic variable &lt;script type=&quot;math/tex&quot;&gt;\textbf{z} = g_\phi(\epsilon, \textbf{z})&lt;/script&gt;. This means, we can write our objective function now as:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+\widetilde{L}(\theta,\phi; x) &amp;= \frac{1}{L} \sum_{l=1}^L \log p_\theta(\textbf{x}, \textbf{z}^{(l)}) - \log q_\phi(\textbf{z}^{(l)} \mid \textbf{x})\\
+\text{where}~ \textbf{z}^{(l)}&amp;=g_\phi(\epsilon^{(l)}, \textbf{x})~\text{and}~\epsilon^{(l)} \sim p (\epsilon)
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;To put it in a practical example, assume &lt;script type=&quot;math/tex&quot;&gt;\textbf{z} \sim q_\phi (\textbf{z} \mid \textbf{x}) = \mathcal{N}(\phi_\mu, \phi_\sigma^2)&lt;/script&gt;. The reparameterization trick suggests to define &lt;script type=&quot;math/tex&quot;&gt;\epsilon \sim \mathcal{N}(\textbf{0},\textbf{I})&lt;/script&gt; and (@@ problem:?) &lt;script type=&quot;math/tex&quot;&gt;g_\phi(\epsilon, \textbf{z}) = \mu + \sigma^2\odot\epsilon&lt;/script&gt;. Where &lt;script type=&quot;math/tex&quot;&gt;\odot&lt;/script&gt; signify an element-wise product. Now, &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}^{(l)}&lt;/script&gt; can be written as &lt;script type=&quot;math/tex&quot;&gt;g_\phi(\epsilon^{(l)}, \textbf{x})&lt;/script&gt;. Essentially, this reparameterization trick reduces the variance dramatically.&lt;/p&gt;
+
+&lt;p&gt;Another novelty the authors suggested in order to further reduce the variance of the gradient is to write &lt;script type=&quot;math/tex&quot;&gt;L(\theta,\phi; \textbf{x})&lt;/script&gt; differently.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+    L(\theta,\phi; \textbf{x}) &amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [\log p_\theta(\textbf{x}, \textbf{z}) - \log q_\phi(\textbf{z} \mid \textbf{x})]\\
+&amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [\log p_\theta(\textbf{x} \mid \textbf{z})p_\theta(\textbf{z})- \log q_\phi(\textbf{z} \mid \textbf{x})]\\
+&amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [\log p_\theta(\textbf{x} \mid \textbf{z}) + \log p_\theta(\textbf{z})- \log q_\phi(\textbf{z} \mid \textbf{x})]\\
+&amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [\log p_\theta(\textbf{x} \mid \textbf{z})] + \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [\log p_\theta(\textbf{z}) -\log q_\phi(\textbf{z} \mid \textbf{x})]\\
+&amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [\log p_\theta(\textbf{x} \mid \textbf{z})] - \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [\log q_\phi(\textbf{z} \mid \textbf{x}) - \log p_\theta(\textbf{z})]\\
+&amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [ \log p_{\theta}(\textbf{x} \mid \textbf{z})] - \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})}  [\log \frac{q_\phi(\textbf{z} \mid \textbf{x})}{p_{\theta}(\textbf{z})}]\\
+&amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [ \log p_{\theta}(\textbf{x} \mid \textbf{z})] - \int_{z} q_\phi(\textbf{z} \mid \textbf{x}) \log \frac{q_\phi(\textbf{z} \mid \textbf{x})}{p_{\theta}(\textbf{z})}\\
+&amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [ \log p_{\theta}(\textbf{x} \mid \textbf{z})] - D_{KL}(q_\phi(\textbf{z} \mid \textbf{x}) \Vert p_{\theta}(\textbf{z}))
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;That is: 
+&lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+L(\theta,\phi; \textbf{x}) &amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [ \log p_{\theta}(\textbf{x} \mid \textbf{z})] - D_{KL}(q_\phi(\textbf{z} \mid \textbf{x}) \Vert p_{\theta}(\textbf{z}))\\
+\text{where}~ \textbf{z}^{(l)}&amp;=g_\phi(\epsilon^{(l)}, \textbf{x})~\text{and}~\epsilon^{(l)} \sim p (\epsilon)
+\end{aligned} %]]&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;Again, empirically, this variation shows less variance than the previous way. A motivation for this can be that unlike in the previous definition of &lt;script type=&quot;math/tex&quot;&gt;L(\theta,\phi; \textbf{x})&lt;/script&gt;, here only the first term is an expectation and needs to be assessed using Monte Carlo estimate, the second term can be integrated analytically.&lt;/p&gt;
+
+&lt;h1 id=&quot;variational-autoencoder&quot;&gt;Variational Autoencoder&lt;/h1&gt;
+
+&lt;p&gt;Alright, lets tie this all together! From the previous section we finalized our  objective function for both the encoder and the decoder (Previous equation). First lets try to understand it, recall Eq. (@@ the first one), where we defined a loss function over the reconstruction process. In variational autoencoders we still care about this reconstruction, manifested in &lt;script type=&quot;math/tex&quot;&gt;\mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [ \log p_{\theta}(\textbf{x} \mid \textbf{z})]&lt;/script&gt;. But we also want to regularize &lt;script type=&quot;math/tex&quot;&gt;q_\phi (\textbf{z} \mid \textbf{x})&lt;/script&gt; by keeping it close to the latent variable distribution, &lt;script type=&quot;math/tex&quot;&gt;p_{\theta}(\textbf{z})&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;Now, an example:&lt;/p&gt;
+
+&lt;p&gt;Assume for this example, all distributions are Gaussian:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+p_\theta(\textbf{z}) &amp;\sim \mathcal{N}(\textbf{0}, \textbf{I})~\text{Notice}~p_\theta(\textbf{z})~\text{is parameter-free}\\
+p_\theta(\textbf{x} \mid \textbf{z}) &amp;\sim \mathcal{N}(\theta_\mu, \theta_{\sigma^2}\textbf{I})\\
+q_\phi(\textbf{z} \mid \textbf{x}) &amp;\sim \mathcal{N}(\phi_\mu, \phi_{\sigma^2}\textbf{I})
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;Using this distributions maximize:&lt;/p&gt;
+
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+L(\theta,\phi; \textbf{x}) &amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [ \log p_{\theta}(\textbf{x} \mid \textbf{z})] - D_{KL}(q_\phi(\textbf{z} \mid \textbf{x}) \Vert p_{\theta}(\textbf{z}))\\
+&amp;= \frac{1}{L} \sum_{l=1}^L \log p_{\theta}(\textbf{x} \mid \textbf{z}^{(l)})) - D_{KL}(q_\phi(\textbf{z} \mid \textbf{x}) \Vert p_{\theta}(\textbf{z}))\\
+&amp;= \frac{1}{L} \sum_{l=1}^L \log p_{\theta}(\textbf{x} \mid \textbf{z}^{(l)})) + \frac{1}{2}\sum_{j=1}^J(1+\log((\sigma^{(i)})^2)-(\mu^{(i)})^2-(\sigma^{(i)})^2) \\
+\text{where}~ \textbf{z}^{(l)}&amp;=g_\phi(\epsilon^{(l)}, \textbf{x})~\text{and}~\epsilon \sim p (\epsilon)
+\end{aligned} %]]&gt;&lt;/script&gt;
+@@ Proof needed&lt;/p&gt;
+
+&lt;p&gt;I did promise some practical point of view to this: The corresponding objective function is: (You can find the full Pytorch code  \href{https://github.com/pytorch/examples/blob/master/vae/main.py}{here})&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;loss_function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;recon_x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mu&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logvar&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;BCE&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;F&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;binary_cross_entropy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;recon_x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;view&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;784&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;reduction&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'sum'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;KLD&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.5&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;torch&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;sum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logvar&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mu&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;pow&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logvar&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;BCE&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;KLD&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;As mentioned before, we can use MLP as the approximator to all our functions:&lt;/p&gt;
+
+&lt;p&gt;Encoder:&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+\log q_\phi(\textbf{z} \mid \textbf{x}) &amp;= \log \mathcal{N}(\phi_\mu, \phi_{\sigma^2}\textbf{I)}\\
+\text{where}\\
+\phi_\mu &amp;= \phi_{W_1}h + \phi_{b_1}\\
+\log \phi_{\sigma^2} &amp;= \phi_{W_2}h + \phi_{b_2}\\
+\phi_h &amp;= \tanh{\phi_{W_3}x+\phi_{b_3}}
+\end{aligned} %]]&gt;&lt;/script&gt;
+
+&lt;p&gt;decoder:
+&lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+\begin{aligned}
+\log p_\theta(\textbf{x} \mid \textbf{z}) &amp;= \log \mathcal{N}(\theta_\mu, \theta_{\sigma^2}\textbf{I)}\\
+\text{where}\\
+\theta_\mu &amp;= \theta_{W_1}h + \theta_{b_1}\\
+\log \theta_{\sigma^2} &amp;= \theta_{W_2}h + \theta_{b_2}\\
+\theta_h &amp;= \tanh{\theta_{W_3}z+\theta_{b_3}}
+\end{aligned} %]]&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;So the corresponding Encoder and Decoder are:&lt;/p&gt;
+
+&lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;VAE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;nn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Module&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;__init__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;super&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;VAE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;__init__&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fc1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Linear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;784&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;400&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fc21&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Linear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;400&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;20&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fc22&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Linear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;400&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;20&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fc3&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Linear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;20&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;400&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fc4&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nn&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;Linear&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;400&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;784&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;encode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;h1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;F&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;relu&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fc1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fc21&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;h1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fc22&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;h1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;reparameterize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mu&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logvar&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;training&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;std&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;torch&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;exp&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.5&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;logvar&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;eps&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;torch&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;randn_like&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;eps&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mul&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;std&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;add_&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mu&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mu&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;decode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;z&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;h3&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;F&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;relu&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fc3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;z&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;torch&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sigmoid&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fc4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;h3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;forward&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;mu&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logvar&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;encode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;view&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;784&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;z&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;reparameterize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;mu&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logvar&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;self&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;decode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;z&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mu&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logvar&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;@@image&lt;/p&gt;
+
+&lt;h1 id=&quot;references&quot;&gt;References&lt;/h1&gt;
+
+&lt;p&gt;[1] &lt;a href=&quot;https://arxiv.org/pdf/1312.6114.pdf&quot;&gt;https://arxiv.org/pdf/1312.6114.pdf&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[2] &lt;a href=&quot;http://gokererdogan.github.io/2017/08/15/variational-autoencoder-explained/&quot;&gt;http://gokererdogan.github.io/2017/08/15/variational-autoencoder-explained/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[3] &lt;a href=&quot;https://icml.cc/2012/papers/687.pdf&quot;&gt;https://icml.cc/2012/papers/687.pdf&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[4] &lt;a href=&quot;https://www.youtube.com/watch?v=ogdv\_6dbvVQ&quot;&gt;https://www.youtube.com/watch?v=ogdv_6dbvVQ&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[5] &lt;a href=&quot;https://blog.evjang.com/2016/08/variational-bayes.html&quot;&gt;https://blog.evjang.com/2016/08/variational-bayes.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[6] &lt;a href=&quot;https://xyang35.github.io/2017/04/14/variational-lower-bound/&quot;&gt;https://xyang35.github.io/2017/04/14/variational-lower-bound/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[7] &lt;a href=&quot;https://jaan.io/what-is-variational-autoencoder-vae-tutorial/&quot;&gt;https://jaan.io/what-is-variational-autoencoder-vae-tutorial/&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[8] &lt;a href=&quot;http://andymiller.github.io/2016/12/19/elbo-gradient-estimators.html&quot;&gt;http://andymiller.github.io/2016/12/19/elbo-gradient-estimators.html&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[9] &lt;a href=&quot;https://arxiv.org/pdf/1601.00670.pdf&quot;&gt;https://arxiv.org/pdf/1601.00670.pdf&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;[10] &lt;a href=&quot;https://github.com/pytorch/examples/blob/master/vae/main.py&quot;&gt;https://github.com/pytorch/examples/blob/master/vae/main.py&lt;/a&gt;&lt;/p&gt;
+</description>
+            <pubDate>Sat, 20 Oct 2018 00:00:00 +0300</pubDate>
+        </item>
+        
+        <item>
+            <title>Implementation Flow Of Neural Networks</title>
+            <link>/2018/06/24/implementation-flow-of-neural-networks.html</link>
+            <guid isPermaLink="true">/2018/06/24/implementation-flow-of-neural-networks.html</guid>
+            <description>&lt;p&gt;Looking back at the time I was a software engineer, when the program didn’t behave as I expected, usually the bug presented itself in all its glory. When I started writing deep neural networks this became less intuitive, a lot less.&lt;/p&gt;
 
 &lt;p&gt;While the research of neural networks is blooming, we still lack of thorough understanding of all its nuts and bolts. It doesn’t only hurt us from a theoretical point of view - Remember your new groundbreaking state-of-the-art model you want to submit to the next big conference, it needs to be implemented one way or the other, and if we are lacking that thorough understanding, this will make our job of implementing that model a lot more difficult.&lt;/p&gt;
 
@@ -160,4 +479,10 @@ Change hyperparameters accordingly; try increasing your hyperparams sizes; chang
 
 &lt;p&gt;[8] &lt;a href=&quot;https://miguel-data-sc.github.io/2017-11-05-first/&quot;&gt;https://miguel-data-sc.github.io/2017-11-05-first/&lt;/a&gt;&lt;/p&gt;
 
-&lt;p&gt;[9] &lt;a href=&quot;https://towardsdatascience.com/understanding-learning-rates-and-how-it-improves-performance-in-deep-learning-d0d4059c1c10&quot;&gt;https://towardsdatascience.com/understanding-learning-rates-and-how-it-improves-performance-in-deep-learning-d0d4059c1c10&lt;/a&gt;&lt;/p&gt;</content><author><name></name></author><summary type="html">Looking back at the time I was a software engineer, when the program didn’t behave as I expected, usually the bug presented itself in all its glory. When I started writing deep neural networks this became less intuitive, a lot less.</summary></entry></feed>
+&lt;p&gt;[9] &lt;a href=&quot;https://towardsdatascience.com/understanding-learning-rates-and-how-it-improves-performance-in-deep-learning-d0d4059c1c10&quot;&gt;https://towardsdatascience.com/understanding-learning-rates-and-how-it-improves-performance-in-deep-learning-d0d4059c1c10&lt;/a&gt;&lt;/p&gt;
+</description>
+            <pubDate>Sun, 24 Jun 2018 00:00:00 +0300</pubDate>
+        </item>
+        
+    </channel>
+</rss>
