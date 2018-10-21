@@ -2,7 +2,7 @@
 baseurl: ""
 url: ""
 title: Matan Eyal
-description: "Matan Eyal - Mostly Blogging About NLP and DL"
+description: "Matan Eyal - Sampled Topics in NLP and DL"
 
 
 # THEME-SPECIFIC CONFIGURATION
@@ -15,7 +15,7 @@ theme_settings:
 
   # Header and footer text
   header_text: > #two or three lines to describe your site
-     Matan Eyal - Mostly Blogging About NLP and DL
+     Matan Eyal -Sampled Topics in NLP and DL
   header_text_feature_image: assets/img/black.jpg
   footer_text: >
    Powered by <a href="https://jekyllrb.com/">Jekyll</a> with <a href="https://github.com/sylhare/Type-on-Strap">Type on Strap</a>
