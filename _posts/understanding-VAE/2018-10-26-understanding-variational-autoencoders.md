@@ -14,10 +14,7 @@ $$ (1) \qquad \phi, \theta = \arg\,min_{\phi, \theta} \| \textbf{x} - p_\theta(q
 
 From a coding theory perspective, the encoder takes the input, or observed variable, $$\textbf{x} \in X$$ and maps it, in our case, using a Multi Layer Perceptron (MLP), to a latent or hidden variable, or code, $$\textbf{z} \in Z$$. Then the decoder maps $$\textbf{z}$$, again, using an MLP, to the reconstruction, $$\textbf{x}'$$.
 
-Throughout reading this post, lets think of $$X \sim p_{\theta^*}(\textbf{x})$$ as a distribution of digit drawings, like MNIST, as the ones below. So the autoencoder's goal is to get $$\textbf{x}$$, an image of a digit, "shrink" its representation to a smaller dimention $$\textbf{z}$$, then reconstructing $$\textbf{x}$$, while not losing (much) information.
-
-![](/assets/understanding-VAE/mnist.png){:height="75%" width="75%"}
-<br>*Shouldn't be introduced, the MNIST dataset.*
+Throughout reading this post, lets think of $$X \sim p_{\theta^*}(\textbf{x})$$ as a distribution of digit drawings, like MNIST. So the autoencoder's goal is to get $$\textbf{x}$$, an image of a digit, "shrink" its representation to a smaller dimention $$\textbf{z}$$, then reconstructing $$\textbf{x}$$, while not losing (much) information.
 
 # Method
 ## Problem Scenario

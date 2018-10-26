@@ -143,10 +143,7 @@ But first, let’s start with a really quick overview of vanilla autoencoders</p
 
 <p>From a coding theory perspective, the encoder takes the input, or observed variable, <script type="math/tex">\textbf{x} \in X</script> and maps it, in our case, using a Multi Layer Perceptron (MLP), to a latent or hidden variable, or code, <script type="math/tex">\textbf{z} \in Z</script>. Then the decoder maps <script type="math/tex">\textbf{z}</script>, again, using an MLP, to the reconstruction, <script type="math/tex">\textbf{x}'</script>.</p>
 
-<p>Throughout reading this post, lets think of <script type="math/tex">X \sim p_{\theta^*}(\textbf{x})</script> as a distribution of digit drawings, like MNIST, as the ones below. So the autoencoder’s goal is to get <script type="math/tex">\textbf{x}</script>, an image of a digit, “shrink” its representation to a smaller dimention <script type="math/tex">\textbf{z}</script>, then reconstructing <script type="math/tex">\textbf{x}</script>, while not losing (much) information.</p>
-
-<p><img src="/assets/understanding-VAE/mnist.png" alt="" height="75%" width="75%" />
-<br /><em>Shouldn’t be introduced, the MNIST dataset.</em></p>
+<p>Throughout reading this post, lets think of <script type="math/tex">X \sim p_{\theta^*}(\textbf{x})</script> as a distribution of digit drawings, like MNIST. So the autoencoder’s goal is to get <script type="math/tex">\textbf{x}</script>, an image of a digit, “shrink” its representation to a smaller dimention <script type="math/tex">\textbf{z}</script>, then reconstructing <script type="math/tex">\textbf{x}</script>, while not losing (much) information.</p>
 
 <h1 id="method">Method</h1>
 <h2 id="problem-scenario">Problem Scenario</h2>

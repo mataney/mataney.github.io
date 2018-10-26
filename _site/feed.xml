@@ -5,7 +5,7 @@
         <atom:link href="/feed.xml" rel="self" type="application/rss+xml"/>
         <link>http://localhost:4000/</link>
         <description></description>
-        <pubDate>Fri, 26 Oct 2018 17:27:14 +0300</pubDate>
+        <pubDate>Fri, 26 Oct 2018 17:36:10 +0300</pubDate>
         
         <item>
             <title>Understanding Variational Autoencoders</title>
@@ -23,10 +23,7 @@ But first, let’s start with a really quick overview of vanilla autoencoders&lt
 
 &lt;p&gt;From a coding theory perspective, the encoder takes the input, or observed variable, &lt;script type=&quot;math/tex&quot;&gt;\textbf{x} \in X&lt;/script&gt; and maps it, in our case, using a Multi Layer Perceptron (MLP), to a latent or hidden variable, or code, &lt;script type=&quot;math/tex&quot;&gt;\textbf{z} \in Z&lt;/script&gt;. Then the decoder maps &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt;, again, using an MLP, to the reconstruction, &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}'&lt;/script&gt;.&lt;/p&gt;
 
-&lt;p&gt;Throughout reading this post, lets think of &lt;script type=&quot;math/tex&quot;&gt;X \sim p_{\theta^*}(\textbf{x})&lt;/script&gt; as a distribution of digit drawings, like MNIST, as the ones below. So the autoencoder’s goal is to get &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt;, an image of a digit, “shrink” its representation to a smaller dimention &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt;, then reconstructing &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt;, while not losing (much) information.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/understanding-VAE/mnist.png&quot; alt=&quot;&quot; height=&quot;75%&quot; width=&quot;75%&quot; /&gt;
-&lt;br /&gt;&lt;em&gt;Shouldn’t be introduced, the MNIST dataset.&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;Throughout reading this post, lets think of &lt;script type=&quot;math/tex&quot;&gt;X \sim p_{\theta^*}(\textbf{x})&lt;/script&gt; as a distribution of digit drawings, like MNIST. So the autoencoder’s goal is to get &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt;, an image of a digit, “shrink” its representation to a smaller dimention &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt;, then reconstructing &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt;, while not losing (much) information.&lt;/p&gt;
 
 &lt;h1 id=&quot;method&quot;&gt;Method&lt;/h1&gt;
 &lt;h2 id=&quot;problem-scenario&quot;&gt;Problem Scenario&lt;/h2&gt;
