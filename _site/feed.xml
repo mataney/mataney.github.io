@@ -5,19 +5,23 @@
         <atom:link href="/feed.xml" rel="self" type="application/rss+xml"/>
         <link>http://localhost:4000/</link>
         <description></description>
-        <pubDate>Fri, 26 Oct 2018 17:36:10 +0300</pubDate>
+        <pubDate>Fri, 09 Nov 2018 09:15:22 +0200</pubDate>
         
         <item>
             <title>Understanding Variational Autoencoders</title>
             <link>/2018/10/26/understanding-variational-autoencoders.html</link>
             <guid isPermaLink="true">/2018/10/26/understanding-variational-autoencoders.html</guid>
-            <description>&lt;p&gt;In this post I attempt to describe Variational Autoencoders (VAE) both from a theoretical and a practical point of view. The first paper to introduce VAE [Kingma et al. 2014] assumes the reader knows quite a bit of Variational Inference (VI). For those of us lacking this consept, i will take the same route the authors took in the original paper, but we will take a closer look on VI. Then, we will review the intersection of autoencoders and VI, the variational autoencoder.
+            <description>&lt;p&gt;In this post I attempt to describe Variational Autoencoders (VAE) both from a theoretical and a practical point of view. The first paper to introduce VAE [Kingma et al. 2014] assumes the reader knows quite a bit of Variational Inference (VI), in this blog post we will not make this assumption and take the scenic route by taking a closer look on VI. Then, we will review the intersection of autoencoders and VI, the variational autoencoder.
 But first, let’s start with a really quick overview of vanilla autoencoders&lt;/p&gt;
 
 &lt;h1 id=&quot;autoencoders&quot;&gt;Autoencoders&lt;/h1&gt;
 
-&lt;p&gt;Generally speaking, an autoencoder is an unsupervised method designed to reconstruct some input data &lt;script type=&quot;math/tex&quot;&gt;\textbf{x} \in X&lt;/script&gt;. The main feature of the autoencoder is the ability to learn a concise representation of the features of &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt;, &lt;i&gt;i.e.&lt;/i&gt;, &lt;script type=&quot;math/tex&quot;&gt;\textbf{z} \in Z&lt;/script&gt;, while being able to reconstruct &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt; from &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt;. In order to create the reconstruction &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}'&lt;/script&gt; the autoencoder uses two functions. The first, an encoder, denoted by &lt;script type=&quot;math/tex&quot;&gt;q_\phi(\textbf{x} \mid \textbf{z})&lt;/script&gt;, and a decoder, denoted by &lt;script type=&quot;math/tex&quot;&gt;p_\theta(\textbf{z} \mid \textbf{x})&lt;/script&gt;, with parameters &lt;script type=&quot;math/tex&quot;&gt;\phi,~\theta&lt;/script&gt; respectively. Notice that &lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
-\dim(\textbf{z}) &lt; \dim(\textbf{x}) %]]&gt;&lt;/script&gt; otherwise the model will not learn anything of use. We want to minimize the reconstruction loss using some loss function, for example the MSE:&lt;/p&gt;
+&lt;p&gt;Generally speaking, an autoencoder is an unsupervised method designed to reconstruct some input data &lt;script type=&quot;math/tex&quot;&gt;\textbf{x} \in X&lt;/script&gt;. The main feature of the autoencoder is its ability to learn a concise representation of the features of &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt;, &lt;i&gt;i.e.&lt;/i&gt;, &lt;script type=&quot;math/tex&quot;&gt;\textbf{z} \in Z&lt;/script&gt;, while being able to reconstruct &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt; from &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/understanding-VAE/enc-dec.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In order to create the reconstruction &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}'&lt;/script&gt; the autoencoder uses two functions. The first, an encoder, denoted by &lt;script type=&quot;math/tex&quot;&gt;q_\phi(\textbf{x} \mid \textbf{z})&lt;/script&gt;, and a decoder, denoted by &lt;script type=&quot;math/tex&quot;&gt;p_\theta(\textbf{z} \mid \textbf{x})&lt;/script&gt;, with parameters &lt;script type=&quot;math/tex&quot;&gt;\phi,~\theta&lt;/script&gt; respectively. Notice that &lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
+\dim(\textbf{z}) &lt; \dim(\textbf{x}) %]]&gt;&lt;/script&gt; otherwise, the identity function is a perfect encoding, so the model will not learn anything of use. We want to minimize the reconstruction loss using some loss function, for example the MSE:&lt;/p&gt;
 
 &lt;script type=&quot;math/tex; mode=display&quot;&gt;(1) \qquad \phi, \theta = \arg\,min_{\phi, \theta} \| \textbf{x} - p_\theta(q_\phi(\textbf{x}))\|^2&lt;/script&gt;
 
@@ -28,9 +32,9 @@ But first, let’s start with a really quick overview of vanilla autoencoders&lt
 &lt;h1 id=&quot;method&quot;&gt;Method&lt;/h1&gt;
 &lt;h2 id=&quot;problem-scenario&quot;&gt;Problem Scenario&lt;/h2&gt;
 
-&lt;p&gt;After reading the previous section, we might notice that autoencoders fit the latent variable model paradigm, in which we assume the observable data &lt;script type=&quot;math/tex&quot;&gt;\textbf{x} \in X&lt;/script&gt; is generated by some random process involving the continuous latent variables &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt;. &lt;i&gt;i.e.&lt;/i&gt;, We generate &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt; from the prior distribution &lt;script type=&quot;math/tex&quot;&gt;p_{\theta^*}(\textbf{z})&lt;/script&gt;, then &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt; is generated from the conditional distribution &lt;script type=&quot;math/tex&quot;&gt;p_{\theta^*}(\textbf{x} \mid \textbf{z})&lt;/script&gt;. Where the distributions &lt;script type=&quot;math/tex&quot;&gt;p_{\theta}(\textbf{z})&lt;/script&gt;, &lt;script type=&quot;math/tex&quot;&gt;p_{\theta}(\textbf{x} \mid \textbf{z})&lt;/script&gt; depend on some parameters &lt;script type=&quot;math/tex&quot;&gt;\mathbf{\theta}&lt;/script&gt;. Notice that we do not have any information regarding the real values of &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt; or the optimum value of parameters &lt;script type=&quot;math/tex&quot;&gt;\theta^*&lt;/script&gt;.&lt;/p&gt;
+&lt;p&gt;After reading the previous section, we might notice that autoencoders fit the latent variable model paradigm, in which we assume the observable data &lt;script type=&quot;math/tex&quot;&gt;\textbf{x} \in X&lt;/script&gt; is generated by some random process involving the continuous latent variables &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt;. &lt;i&gt;i.e.&lt;/i&gt;, We generate &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt; from a prior distribution &lt;script type=&quot;math/tex&quot;&gt;p_{\theta^*}(\textbf{z})&lt;/script&gt;, then &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt; is generated from the conditional distribution &lt;script type=&quot;math/tex&quot;&gt;p_{\theta^*}(\textbf{x} \mid \textbf{z})&lt;/script&gt;. Where the distributions &lt;script type=&quot;math/tex&quot;&gt;p_{\theta}(\textbf{z})&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;p_{\theta}(\textbf{x} \mid \textbf{z})&lt;/script&gt; depend on some parameters &lt;script type=&quot;math/tex&quot;&gt;\mathbf{\theta}&lt;/script&gt;. Notice that we do not have any information regarding the real values of &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt; or the optimum value of parameters &lt;script type=&quot;math/tex&quot;&gt;\theta^*&lt;/script&gt;.&lt;/p&gt;
 
-&lt;p&gt;(A note regarding notation. A more verbose notation could be: &lt;script type=&quot;math/tex&quot;&gt;p_{\theta_1}(\textbf{z})&lt;/script&gt;, &lt;script type=&quot;math/tex&quot;&gt;p_{\theta_2}(\textbf{x} \mid \textbf{z})&lt;/script&gt; are parametric functions and the real values of &lt;script type=&quot;math/tex&quot;&gt;\theta = (\theta_1, \theta_2)&lt;/script&gt; are unknown. We will use the former notation for consistency with Kingma et al.’s paper)&lt;/p&gt;
+&lt;p&gt;(A note regarding notation. A more verbose notation could be: &lt;script type=&quot;math/tex&quot;&gt;p_{\theta_1}(\textbf{z})&lt;/script&gt;, &lt;script type=&quot;math/tex&quot;&gt;p_{\theta_2}(\textbf{x} \mid \textbf{z})&lt;/script&gt; are parametric functions and the real values of &lt;script type=&quot;math/tex&quot;&gt;\theta = (\theta_1, \theta_2)&lt;/script&gt; are unknown. We will use the former notation for consistency with Kingma et al.)&lt;/p&gt;
 
 &lt;h3 id=&quot;generation-process&quot;&gt;Generation Process&lt;/h3&gt;
 
@@ -38,7 +42,7 @@ But first, let’s start with a really quick overview of vanilla autoencoders&lt
 
 &lt;p&gt;Why is this a generative process?&lt;/p&gt;
 
-&lt;p&gt;Again, think of &lt;script type=&quot;math/tex&quot;&gt;X&lt;/script&gt; as a set of images. These images come from some distribution &lt;script type=&quot;math/tex&quot;&gt;p_{\theta^*}(\textbf{x})&lt;/script&gt; we know nothing about. But if we can find the conditional distribution &lt;script type=&quot;math/tex&quot;&gt;p_{\theta}(\textbf{x} \mid \textbf{z})&lt;/script&gt; (And we know &lt;script type=&quot;math/tex&quot;&gt;p_{\theta}(\textbf{z})&lt;/script&gt;) we can generate images!&lt;/p&gt;
+&lt;p&gt;Again, think of &lt;script type=&quot;math/tex&quot;&gt;X&lt;/script&gt; as a set of images. These images come from some distribution &lt;script type=&quot;math/tex&quot;&gt;p_{\theta^*}(\textbf{x})&lt;/script&gt; we know nothing about. But if we can find the conditional distribution &lt;script type=&quot;math/tex&quot;&gt;p_{\theta}(\textbf{x} \mid \textbf{z})&lt;/script&gt; (And we know how to sample from &lt;script type=&quot;math/tex&quot;&gt;p_{\theta}(\textbf{z})&lt;/script&gt;) we can generate images!&lt;/p&gt;
 
 &lt;p&gt;&lt;img src=&quot;/assets/understanding-VAE/generator2.png&quot; alt=&quot;&quot; /&gt;
 &lt;br /&gt;&lt;em&gt;The Generation Process&lt;/em&gt;&lt;/p&gt;
@@ -63,21 +67,21 @@ But first, let’s start with a really quick overview of vanilla autoencoders&lt
 
 &lt;script type=&quot;math/tex; mode=display&quot;&gt;p(\textbf{z} \mid \textbf{x}) = \frac{p(\textbf{z}, \textbf{x})}{p(\textbf{x})}&lt;/script&gt;
 
-&lt;p&gt;The denominator, &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{x})p(x)&lt;/script&gt;, as we saw beforehand, is intractable. Variational Inference(VI) suggests to find another distribution that we know how to sample from and is close to the original posterior distribution, &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})p(z \sim x)&lt;/script&gt;.&lt;/p&gt;
+&lt;p&gt;The denominator, &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{x})&lt;/script&gt;, as we saw beforehand, is intractable. Variational Inference(VI) suggests to find another distribution that we know how to sample from and is close to the original posterior distribution, &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt;.&lt;/p&gt;
 
 &lt;p&gt;&lt;img src=&quot;/assets/understanding-VAE/var-inf.png&quot; alt=&quot;&quot; /&gt;
 &lt;em&gt;&lt;br /&gt;Image from &lt;a href=&quot;https://www.youtube.com/watch?v=ogdv6dbvVQ&quot;&gt;this&lt;/a&gt; NIPS tutorial. Notice in this post we use &lt;script type=&quot;math/tex&quot;&gt;\phi&lt;/script&gt; instead of &lt;script type=&quot;math/tex&quot;&gt;\nu&lt;/script&gt; as the distribution’s parameters.&lt;/em&gt;&lt;/p&gt;
 
 &lt;p&gt;Formally, Variational Inference suggest that instead of trying to infer about something we don’t know how to compute, lets try to optimize the proximity of a new distribution &lt;script type=&quot;math/tex&quot;&gt;q_\phi(\textbf{z} \mid \textbf{x})&lt;/script&gt; to the original posterior &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt;. How does it work? Select a variational family of distributions over the latent variables we know how to sample from, denoted by &lt;script type=&quot;math/tex&quot;&gt;Q_\phi(\textbf{z})&lt;/script&gt;. Choose some parametric distribution &lt;script type=&quot;math/tex&quot;&gt;q_\phi(\textbf{z} \mid \textbf{x}) \in Q_\phi(\textbf{z})&lt;/script&gt;. Then, search for &lt;script type=&quot;math/tex&quot;&gt;\phi&lt;/script&gt; that approximates &lt;script type=&quot;math/tex&quot;&gt;q_{\phi}(\textbf{z} \mid \textbf{x})&lt;/script&gt; to &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt;. Now we can approximating sampling from &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt; by sampling from &lt;script type=&quot;math/tex&quot;&gt;q_{\phi}(\textbf{z} \mid \textbf{x})&lt;/script&gt;.&lt;/p&gt;
 
-&lt;p&gt;For example, assume we want to find an approximation to &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt; we hypothesize that it can be approximated by a normal distribution with some mean and variance. Denote &lt;script type=&quot;math/tex&quot;&gt;Q_\phi(\textbf{z})&lt;/script&gt; as the family of normal distributions &lt;script type=&quot;math/tex&quot;&gt;\mathcal{N}(\phi_{\mu}, \phi_{\sigma^2})&lt;/script&gt;. We are looking for &lt;script type=&quot;math/tex&quot;&gt;\phi^*&lt;/script&gt; such that &lt;script type=&quot;math/tex&quot;&gt;q_{\phi^*}(z)=\mathcal{N}(\phi_{\mu^*}, \phi_{\sigma^*})&lt;/script&gt;  is as close as possible to the real posterior, &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt;.&lt;/p&gt;
+&lt;p&gt;For example, assume we want to find an approximation to &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt; we hypothesize that it can be approximated by a normal distribution with some mean and variance. Denote &lt;script type=&quot;math/tex&quot;&gt;Q_\phi(\textbf{z})&lt;/script&gt; as the family of normal distributions &lt;script type=&quot;math/tex&quot;&gt;\mathcal{N}(\phi_{\mu}, \phi_{\sigma})&lt;/script&gt;. We are looking for &lt;script type=&quot;math/tex&quot;&gt;\phi^*&lt;/script&gt; such that &lt;script type=&quot;math/tex&quot;&gt;q_{\phi^*}(z)=\mathcal{N}(\phi_{\mu^*}, \phi_{\sigma^*})&lt;/script&gt;  is as close as possible to the real posterior, &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt;.&lt;/p&gt;
 
 &lt;p&gt;&lt;img src=&quot;/assets/understanding-VAE/var-inf2.png&quot; alt=&quot;&quot; height=&quot;75%&quot; width=&quot;75%&quot; /&gt;
 &lt;em&gt;&lt;br /&gt;The plot shows the original distribution (yellow) along with the Laplace (red) and variational (green) approximations. Image from [11]&lt;/em&gt;&lt;/p&gt;
 
-&lt;p&gt;Why is this easier then our original question? our goal now is optimizing and not inferring, and optimizing is something we do quite a lot, just use your favorite gradient decent algorithm.&lt;/p&gt;
+&lt;p&gt;Why is this easier then our original question? Our goal now is optimizing and not inferring, and optimizing is something we do quite well, just use your favorite gradient decent algorithm.&lt;/p&gt;
 
-&lt;p&gt;(Another note regarding notation. In VI we indeed look for some distribution &lt;script type=&quot;math/tex&quot;&gt;q_\phi(\textbf{z})&lt;/script&gt; approximating &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt; that may or may not depend on input &lt;script type=&quot;math/tex&quot;&gt;x&lt;/script&gt;. In Kingma et al.’s paper we also care about &lt;script type=&quot;math/tex&quot;&gt;q_\theta(\cdot)&lt;/script&gt; with respect to the input (Think about the reconstruction process). For this reason we specifically look for a distribution that depends on the input, so from now on, we note this as &lt;script type=&quot;math/tex&quot;&gt;q_\phi(\textbf{z} \mid \textbf{x})&lt;/script&gt;)&lt;/p&gt;
+&lt;p&gt;(Another note regarding notation. In VI we indeed look for some distribution &lt;script type=&quot;math/tex&quot;&gt;q_\phi(\textbf{z})&lt;/script&gt; approximating &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt; that may or may not depend on the input &lt;script type=&quot;math/tex&quot;&gt;\textbf{x}&lt;/script&gt;. In Kingma et al.’s paper we also care about &lt;script type=&quot;math/tex&quot;&gt;q_\theta(\cdot)&lt;/script&gt; with respect to the input (Think about the reconstruction process). For this reason we specifically look for a distribution that depends on the input, so from now on, we note this as &lt;script type=&quot;math/tex&quot;&gt;q_\phi(\textbf{z} \mid \textbf{x})&lt;/script&gt;)&lt;/p&gt;
 
 &lt;p&gt;So our optimization problem now, for the posterior inference, is minimizing the proximity of  &lt;script type=&quot;math/tex&quot;&gt;q_\phi(\textbf{z} \mid \textbf{x})&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{z} \mid \textbf{x})&lt;/script&gt;. Usually (but not always) in VI, closeness is defined by the Kullback–Leibler divergence defined over distributions &lt;script type=&quot;math/tex&quot;&gt;p(x)&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;q(x)&lt;/script&gt; by&lt;/p&gt;
 
@@ -92,7 +96,7 @@ D_{KL}(q \Vert p) = \int_x q(x) \log \frac{q(x)}{p(x)}
 \min_\phi D_{KL}(q_\phi(\textbf{z} \mid \textbf{x}) \Vert p(\textbf{z} \mid \textbf{x})) &amp;= \int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{q_\phi(\textbf{z} \mid \textbf{x})}{p(\textbf{z} \mid \textbf{x})} dz
 \end{aligned} %]]&gt;&lt;/script&gt;
 
-&lt;p&gt;The second input to the KL divergence is the same posterior distribution we want to find, so we can’t compute it. Let’s see if there’s anything else we can say about this equation.&lt;/p&gt;
+&lt;p&gt;The second input to the KL divergence is the same posterior distribution we want to find, so we can’t directly compute it. Let’s see if there’s anything else we can say about this equation.&lt;/p&gt;
 
 &lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
 \begin{aligned}
@@ -119,7 +123,7 @@ L(\phi; \textbf{x}) = -\int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{q
     \log p(\textbf{x}) &amp;= D_{KL}(q_\phi(\textbf{z} \mid \textbf{x}) \Vert P(\textbf{z} \mid \textbf{x})) + L(\phi; \textbf{x}) \\
 \end{aligned} %]]&gt;&lt;/script&gt;
 
-&lt;p&gt;Do you remember I said Kingma et al. assumes quite a bit about the readers knowledge in VI, this is (almost) equation 1 in their paper.&lt;/p&gt;
+&lt;p&gt;Do you remember I said Kingma et al. assumes quite a bit about the readers knowledge in VI, this is (almost) equation 1 in their paper. We did take the scenic route.&lt;/p&gt;
 
 &lt;p&gt;The first term in the RHS is always positive, so the second term is the lower bound of the equation, and by that of &lt;script type=&quot;math/tex&quot;&gt;p(\textbf{x})&lt;/script&gt;, the evidence. For this reason &lt;script type=&quot;math/tex&quot;&gt;L(\phi; \textbf{x})&lt;/script&gt; is known as the Evidence Lower BOund or ELBO.&lt;/p&gt;
 
@@ -131,15 +135,13 @@ L(\phi; \textbf{x}) = -\int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{q
 \max_\phi L(\phi; \textbf{x})
 \end{aligned}&lt;/script&gt;
 
-&lt;p&gt;We can now join both of our goals, learn &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; for the generation process together with learning &lt;script type=&quot;math/tex&quot;&gt;\phi&lt;/script&gt; for &lt;script type=&quot;math/tex&quot;&gt;p_\theta(\textbf{x} \mid \textbf{z})&lt;/script&gt;., the posterior .&lt;/p&gt;
+&lt;p&gt;We can now join both of our goals, learn &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; for the generation process together with learning &lt;script type=&quot;math/tex&quot;&gt;\phi&lt;/script&gt; for &lt;script type=&quot;math/tex&quot;&gt;p_\theta(\textbf{x} \mid \textbf{z})&lt;/script&gt;, the posterior .&lt;/p&gt;
 
 &lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
 \begin{aligned}
 \max_{\theta,\phi} L(\theta,\phi; \textbf{x}) &amp;= \int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{p(\textbf{z})p_\theta(\textbf{x} \mid \textbf{z})}{q_\phi(\textbf{z} \mid \textbf{x})}dz\\
 &amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [-\log q_\phi(\textbf{z} \mid \textbf{x}) +\log p_\theta(\textbf{x}, \textbf{z})]
 \end{aligned} %]]&gt;&lt;/script&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/understanding-VAE/enc-dec.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;L(\theta,\phi; \textbf{x})&lt;/script&gt; is now expressed as an estimation. Using Monte Carlo estimate we can estimate it as its average: Generate &lt;script type=&quot;math/tex&quot;&gt;L&lt;/script&gt; different &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt; samples and average the inner function of &lt;script type=&quot;math/tex&quot;&gt;L(\theta,\phi; \textbf{x})&lt;/script&gt;&lt;/p&gt;
 
@@ -149,7 +151,7 @@ L(\phi; \textbf{x}) = -\int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{q
 \text{where}~ \textbf{z}^{(l)} &amp;\sim q_\phi (\textbf{z} \mid \textbf{x})
 \end{aligned} %]]&gt;&lt;/script&gt;
 
-&lt;p&gt;Finally we have a function we can optimize, recall gradient decent algorithms optimization step (&lt;script type=&quot;math/tex&quot;&gt;w_{i+1} = w_i - \lambda\nabla L(w_i)&lt;/script&gt; for some rate &lt;script type=&quot;math/tex&quot;&gt;\lambda&lt;/script&gt;), we now need to compute the gradient of &lt;script type=&quot;math/tex&quot;&gt;L(\theta,\phi; \textbf{x})&lt;/script&gt; with respect to both &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;\phi&lt;/script&gt;.&lt;/p&gt;
+&lt;p&gt;Finally we have a function we can optimize, recall gradient decent’s optimization step (&lt;script type=&quot;math/tex&quot;&gt;w_{i+1} = w_i - \lambda\nabla L(w_i)&lt;/script&gt; for some rate &lt;script type=&quot;math/tex&quot;&gt;\lambda&lt;/script&gt;), we now need to compute the gradient of &lt;script type=&quot;math/tex&quot;&gt;L(\theta,\phi; \textbf{x})&lt;/script&gt; with respect to both &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt; and &lt;script type=&quot;math/tex&quot;&gt;\phi&lt;/script&gt;.&lt;/p&gt;
 
 &lt;p&gt;The gradient with respect to &lt;script type=&quot;math/tex&quot;&gt;\theta&lt;/script&gt;, &lt;script type=&quot;math/tex&quot;&gt;\nabla_\theta&lt;/script&gt;,  is fairly straight forward because we can push the gradient inside the sum:&lt;/p&gt;
 
@@ -163,7 +165,7 @@ L(\phi; \textbf{x}) = -\int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{q
 
 &lt;p&gt;Why does it matter? In optimization, the variance of the gradient is more important than the value of the function itself. The gradient impacts the practicability and the speed of the convergence of the optimization problem, so this is not quite the solution we were looking for. (Interestingly though, the result of the gradient using the Log Derivative Trick is just like REINFORCE, sometimes also called the likelihood ratio)&lt;/p&gt;
 
-&lt;p&gt;If we can’t push the gradient inside the sum because &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}^{(l)}&lt;/script&gt; is sampled from &lt;script type=&quot;math/tex&quot;&gt;q_\phi (\textbf{z} \mid \textbf{x})&lt;/script&gt;, can we sample &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}^{(l)}&lt;/script&gt; independently of &lt;script type=&quot;math/tex&quot;&gt;\phi&lt;/script&gt; while still &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}^{(l)} \sim q_\phi (\textbf{z} \mid \textbf{x})&lt;/script&gt;? What Kingma et al. suggested as a solution, known as the reparameterization trick, is to sample &lt;script type=&quot;math/tex&quot;&gt;\textbf{z} \sim q_\phi (\textbf{z} \mid \textbf{x})&lt;/script&gt; using a new auxiliary parameter-free variable &lt;script type=&quot;math/tex&quot;&gt;\epsilon \sim p(\epsilon)&lt;/script&gt; (&lt;script type=&quot;math/tex&quot;&gt;\epsilon&lt;/script&gt; is a vector, having trouble bolding it), and a parametric function &lt;script type=&quot;math/tex&quot;&gt;g_\phi(\cdot)&lt;/script&gt;, such that now &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt; is a deterministic variable &lt;script type=&quot;math/tex&quot;&gt;\textbf{z} = g_\phi(\epsilon, \textbf{z})&lt;/script&gt;. This means, we can write our objective function now as:&lt;/p&gt;
+&lt;p&gt;If we can’t push the gradient inside the sum because &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}^{(l)}&lt;/script&gt; is sampled from &lt;script type=&quot;math/tex&quot;&gt;q_\phi (\textbf{z} \mid \textbf{x})&lt;/script&gt;, can we sample &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}^{(l)}&lt;/script&gt; independently of &lt;script type=&quot;math/tex&quot;&gt;\phi&lt;/script&gt; while still &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}^{(l)} \sim q_\phi (\textbf{z} \mid \textbf{x})&lt;/script&gt;? What Kingma et al. suggested as a solution, known as the reparameterization trick, is to sample &lt;script type=&quot;math/tex&quot;&gt;\textbf{z} \sim q_\phi (\textbf{z} \mid \textbf{x})&lt;/script&gt; using a new auxiliary parameter-free variable &lt;script type=&quot;math/tex&quot;&gt;\epsilon \sim p(\epsilon)&lt;/script&gt; (&lt;script type=&quot;math/tex&quot;&gt;\epsilon&lt;/script&gt; is a vector here), and &lt;script type=&quot;math/tex&quot;&gt;g_\phi(\cdot)&lt;/script&gt; is a parametric function, such that now &lt;script type=&quot;math/tex&quot;&gt;\textbf{z}&lt;/script&gt; is a deterministic variable &lt;script type=&quot;math/tex&quot;&gt;\textbf{z} = g_\phi(\epsilon, \textbf{z})&lt;/script&gt;. This means, we can write our objective function now as:&lt;/p&gt;
 
 &lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
 \begin{aligned}
@@ -175,7 +177,7 @@ L(\phi; \textbf{x}) = -\int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{q
 
 &lt;p&gt;Another novelty the authors suggested in order to further reduce the variance of the gradient is to write &lt;script type=&quot;math/tex&quot;&gt;L(\theta,\phi; \textbf{x})&lt;/script&gt; differently.&lt;/p&gt;
 
-&lt;script type=&quot;math/tex; mode=display&quot;&gt;% &lt;![CDATA[
+&lt;p&gt;&lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
 \begin{aligned}
     L(\theta,\phi; \textbf{x}) &amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [\log p_\theta(\textbf{x}, \textbf{z}) - \log q_\phi(\textbf{z} \mid \textbf{x})]\\
 &amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [\log p_\theta(\textbf{x} \mid \textbf{z})p_\theta(\textbf{z})- \log q_\phi(\textbf{z} \mid \textbf{x})]\\
@@ -186,15 +188,16 @@ L(\phi; \textbf{x}) = -\int_{z} q_\phi (\textbf{z} \mid \textbf{x}) \log \frac{q
 &amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [ \log p_{\theta}(\textbf{x} \mid \textbf{z})] - \int_{z} q_\phi(\textbf{z} \mid \textbf{x}) \log \frac{q_\phi(\textbf{z} \mid \textbf{x})}{p_{\theta}(\textbf{z})}\\
 &amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [ \log p_{\theta}(\textbf{x} \mid \textbf{z})] - D_{KL}(q_\phi(\textbf{z} \mid \textbf{x}) \Vert p_{\theta}(\textbf{z}))
 \end{aligned} %]]&gt;&lt;/script&gt;
-
-&lt;p&gt;That is: 
+&lt;br /&gt;&lt;br /&gt;
+That is:
+&lt;br /&gt;
 &lt;script type=&quot;math/tex&quot;&gt;% &lt;![CDATA[
 \begin{aligned}
 L(\theta,\phi; \textbf{x}) &amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x})} [ \log p_{\theta}(\textbf{x} \mid \textbf{z})] - D_{KL}(q_\phi(\textbf{z} \mid \textbf{x}) \Vert p_{\theta}(\textbf{z}))\\
 \text{where}~ \textbf{z}^{(l)}&amp;=g_\phi(\epsilon^{(l)}, \textbf{x})~\text{and}~\epsilon^{(l)} \sim p (\epsilon)
 \end{aligned} %]]&gt;&lt;/script&gt;&lt;/p&gt;
 
-&lt;p&gt;Again, empirically, this variation shows less variance than the previous way. A motivation for this can be that unlike in the previous definition of &lt;script type=&quot;math/tex&quot;&gt;L(\theta,\phi; \textbf{x})&lt;/script&gt;, here only the first term is an expectation and needs to be assessed using Monte Carlo estimate, the second term can be integrated analytically.&lt;/p&gt;
+&lt;p&gt;Again, empirically, this variation shows less variance than the previous way. A motivation for this can be that unlike in the previous definition of &lt;script type=&quot;math/tex&quot;&gt;L(\theta,\phi; \textbf{x})&lt;/script&gt;, here, only the first term is an expectation and needs to be assessed using Monte Carlo estimate, the second term can be integrated analytically as Kingma et al. showed in their paper.&lt;/p&gt;
 
 &lt;h1 id=&quot;variational-autoencoder&quot;&gt;Variational Autoencoder&lt;/h1&gt;
 
@@ -224,7 +227,9 @@ L(\theta,\phi; \textbf{x}) &amp;= \mathbb{E}_{q_\phi (\textbf{z} \mid \textbf{x}
 \text{where}~ \textbf{z}^{(l)}&amp;=g_\phi(\epsilon^{(l)}, \textbf{x})~\text{and}~\epsilon \sim p (\epsilon)
 \end{aligned} %]]&gt;&lt;/script&gt;
 
-&lt;p&gt;I did promise some practical point of view to this: The corresponding objective function is: (You can find the full Pytorch code  \href{https://github.com/pytorch/examples/blob/master/vae/main.py}{here})&lt;/p&gt;
+&lt;p&gt;I did promise some practical point of view to this, let see how the code for this should look like (You can find the full Pytorch code &lt;a href=&quot;https://github.com/pytorch/examples/blob/master/vae/main.py&quot;&gt;here&lt;/a&gt;).&lt;/p&gt;
+
+&lt;p&gt;The corresponding objective function is:&lt;/p&gt;
 
 &lt;div class=&quot;language-python highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;loss_function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;recon_x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;mu&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;logvar&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
     &lt;span class=&quot;n&quot;&gt;BCE&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;F&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;binary_cross_entropy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;recon_x&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;x&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;view&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;784&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;reduction&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;'sum'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
